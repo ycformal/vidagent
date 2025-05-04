@@ -1,0 +1,19 @@
+Question: How many babies are in the video?
+
+Reference Answer: 1
+
+Video ID: 6689569583
+
+Program:
+
+```
+ANSWERS0=VQA(video=VIDEO,question="How many babies are there?")
+ANSWER0=SELECT(question="How many babies are in the video?",information=ANSWERS0,choices=CHOICES)
+FINAL_RESULT=RESULT(var=ANSWER0)
+```
+Rationale:
+
+<hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">,&nbsp;<b><span style='color: darkorange;'>question</span></b>='How many babies are there?')=<b><span style='color: green;'>['two', 'one', 'two', 'two', 'two', 'two', 'two', '2', 'two', 'two', 'one', 'two']</span></b></div><hr><div><b><span style='color: blue;'>ANSWER0</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How many babies are in the video?, <b><span style='color: darkorange;'>information</span></b>=['two', 'one', 'two', 'two', 'two', 'two', 'two', '2', 'two', 'two', 'one', 'two'], <b><span style='color: darkorange;'>choices</span></b>=['two', 'one', 'kitchen', 'three', 'four'])=<b><span style='color: green;'>0</span></b></div><hr><div><b><span style='color: red;'>RESULT</span></b> -> <b><span style='color: blue;'>ANSWER0</span></b> -> <b><span style='color: green;'>0</span></b></div><hr>
+
+Answer: 0
+
