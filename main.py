@@ -9,7 +9,7 @@ from IPython.core.display import HTML
 from functools import partial
 
 from engine.utils import ProgramGenerator, ProgramInterpreter
-from prompts.multichoice_tvp import create_prompt
+from prompts.task_repository import create_prompt
 from engine.video import Video
 import pandas as pd
 from tqdm import tqdm
@@ -32,7 +32,7 @@ elif args.model == 'mistral':
 else:
     raise ValueError('Invalid model name')
 
-prompter = partial(create_prompt,method='all')
+prompter = partial(create_prompt)
 generator = ProgramGenerator(prompter=prompter, model_name_or_path=model)
 interpreter = ProgramInterpreter()
 import openai
@@ -41,12 +41,12 @@ key = ''.join([chr(ord(k)-1) for k in key])
 openai.api_key=key
 
 dataset = pd.read_csv('dataset/NExTVideo/test.csv')
-folder_name = f'results_vidagent_{args.model}_cap'
+folder_name = f'results_vidagent_{args.model}_vidqa'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
 for idx, row in tqdm(dataset.iterrows()):
-    if idx < 204:
+    if idx < 317:
         continue
     if idx == 400:
         break
@@ -65,6 +65,7 @@ for idx, row in tqdm(dataset.iterrows()):
             prog,_ = generator.generate(dict(question=question))
         except Exception as e:
             prog,_ = generator.generate(dict(question=question))
+    prog = prog.replace('VQA', 'VIDQA')
     print(prog)
     with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','w') as f:
         f.write(f'Question: {question}\n\n')
@@ -75,15 +76,12 @@ for idx, row in tqdm(dataset.iterrows()):
         VIDEO=Video.read_file(f'dataset/NExTVideo/videos/{video_id}.mp4'),
         CHOICES=[row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]
     )
-    result, prog_state, html_str = interpreter.execute(prog,init_state,inspect=True)
-    with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-        f.write(f'Rationale:\n\n{html_str}\n\n')
-    # try:
-    #     result, prog_state, html_str = interpreter.execute(prog,init_state,inspect=True)
-    #     with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-    #         f.write(f'Rationale:\n\n{html_str}\n\n')
-    # except Exception as e:
-    #     result = 'Runtime error: ' + str(e)
+    try:
+        result, prog_state, html_str = interpreter.execute(prog,init_state,inspect=True)
+        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
+            f.write(f'Rationale:\n\n{html_str}\n\n')
+    except Exception as e:
+        result = 'Runtime error: ' + str(e)
     print(result)
     with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
         f.write(f'Answer: {result}\n\n')

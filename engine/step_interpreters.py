@@ -1,7 +1,7 @@
 import torch
 import io, tokenize
 from PIL import Image
-from transformers import (OwlViTProcessor, OwlViTForObjectDetection, AutoProcessor, BlipForQuestionAnswering, TvpForVideoGrounding, AutoModelForCausalLM, Blip2Processor, Blip2ForConditionalGeneration)
+from transformers import (OwlViTProcessor, OwlViTForObjectDetection, AutoProcessor, BlipForQuestionAnswering, TvpForVideoGrounding, AutoModelForCausalLM, Blip2Processor, Blip2ForConditionalGeneration, Qwen2_5_VLForConditionalGeneration)
 from nltk.stem import PorterStemmer
 import nltk
 from .clustering import cluster
@@ -12,6 +12,14 @@ from vis_utils import html_embed_image, html_colored_span, vis_masks
 import openai
 import json
 import numpy as np
+
+from llava.model.builder import load_pretrained_model
+from llava.mm_utils import tokenizer_image_token
+from llava.constants import DEFAULT_IMAGE_TOKEN, IMAGE_TOKEN_INDEX
+from llava.conversation import conv_templates
+import copy
+import re
+from qwen_vl_utils import process_vision_info
 
 nltk.download('punkt_tab') # If there's error message, just modify the package name according to what the error message says
 
@@ -200,6 +208,142 @@ class VQAInterpreter():
             return answers, html_str
         return answers
 
+class VIDQAInterpreter:
+    step_name = 'VIDQA'
+
+    def __init__(
+        self,
+        pretrained: str = "lmms-lab/LLaVA-Video-7B-Qwen2",
+        model_name: str = "llava_qwen",
+        max_frames: int = 64,
+        conv_template: str = "qwen_1_5",
+        device: str = "cuda"
+    ):
+        print(f"Registering {self.step_name} step with {pretrained}")
+        self.device = device if torch.cuda.is_available() else "cpu"
+        self.max_frames = max_frames
+        self.conv_template = conv_template
+
+        # load tokenizer, model, image_processor
+        self.tokenizer, self.model, self.image_processor, _ = load_pretrained_model(
+            pretrained, None, model_name)
+        self.model.to(self.device).eval()
+
+    def parse(self, prog_step):
+        pr = parse_step(prog_step.prog_str)
+        assert pr['step_name'] == self.step_name
+        video_var = pr['args']['video']
+        question = eval(pr['args']['question'])
+        output_var = pr['output_var']
+        return video_var, question, output_var
+
+    def predict(self, video, question: str, choices):
+
+        frames, timestamps = video.extract_all_frames()
+        frames_np = np.stack([np.array(img) for img in frames])
+        frame_time_str = ",".join(f"{t:.2f}s" for t in timestamps)
+        video_time = video.get_video_length()
+
+        # preprocess frames to pixel_values tensor
+        pixel_values = self.image_processor.preprocess(
+            frames_np, return_tensors="pt"
+        )["pixel_values"].to(self.device).half()
+        # pack into list as the model expects
+        video_inputs = [pixel_values]
+
+        # build conversation
+        time_instr = (
+            f"The video lasts for {video_time:.2f} seconds, "
+            f"and {pixel_values.shape[1]} frames are uniformly sampled at {frame_time_str}. "
+        )
+        prompt_text = DEFAULT_IMAGE_TOKEN + "\n" + time_instr + "\n" + question + f"\nChoices (choose one): {', '.join(choices)}."
+
+        conv = copy.deepcopy(conv_templates[self.conv_template])
+        conv.append_message(conv.roles[0], prompt_text)
+        conv.append_message(conv.roles[1], None)
+        prompt = conv.get_prompt()
+
+        # tokenize with image token
+        input_ids = tokenizer_image_token(
+            prompt,
+            self.tokenizer,
+            IMAGE_TOKEN_INDEX,
+            return_tensors="pt"
+        ).unsqueeze(0).to(self.device)
+
+        # generate
+        with torch.no_grad():
+            outputs = self.model.generate(
+                input_ids,
+                images=video_inputs,
+                modalities=["video"],
+                do_sample=False,
+                temperature=0.0,
+                max_new_tokens=512,
+            )
+
+        answer = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip()
+
+        prompt_text = DEFAULT_IMAGE_TOKEN + "\n" + time_instr + "\n" + question + f"\nPlease describe this video in detail."
+
+        conv = copy.deepcopy(conv_templates[self.conv_template])
+        conv.append_message(conv.roles[0], prompt_text)
+        conv.append_message(conv.roles[1], None)
+        prompt = conv.get_prompt()
+
+        # tokenize with image token
+        input_ids = tokenizer_image_token(
+            prompt,
+            self.tokenizer,
+            IMAGE_TOKEN_INDEX,
+            return_tensors="pt"
+        ).unsqueeze(0).to(self.device)
+
+        # generate
+        with torch.no_grad():
+            outputs = self.model.generate(
+                input_ids,
+                images=video_inputs,
+                modalities=["video"],
+                do_sample=False,
+                temperature=0.0,
+                max_new_tokens=512,
+            )
+
+        answer = "Caption: " + self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip() + "(trust the caption **only if** it **explicitly** mentions evidence that fully supports another answer. **Events that are not mentioned should not be considered as incorrect.**)\nVLM answer: " + answer
+        # answer += ' (please judge according to **both** the answer above and the caption below. For the caption, only take **explicitly** mentioned things as evidence. **If something is not mentioned, you cannot directly judge it as wrong, as the caption may overlook details.**)\n' + self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip()
+        print(answer)
+        return [answer]
+
+    def html(self, img, question, answers, output_var):
+        step = html_step_name(self.step_name)
+        img_str = html_embed_image(img)
+        ans_str = html_output(answers[0])
+        q_arg = html_arg_name('question')
+        v_arg = html_arg_name('video')
+        out = html_var_name(output_var)
+        return (
+            f"<div>"
+            f"{out}={step}({v_arg}={img_str}, {q_arg}='{question}')="
+            f"{ans_str}"
+            f"</div>"
+        )
+
+    def execute(self, prog_step, inspect=False):
+        video_var, question, output_var = self.parse(prog_step)
+        video = prog_step.state[video_var]
+
+        answers = self.predict(video, question, prog_step.state["CHOICES"])
+        prog_step.state[output_var] = answers
+
+        if inspect:
+            mid_t = video.get_video_length() / 2
+            frame = video.extract_frame(mid_t)
+            html_str = self.html(frame, question, answers, output_var)
+            return answers, html_str
+
+        return answers
+
 class LocInterpreter():
     step_name = 'LOC'
 
@@ -372,110 +516,81 @@ class LocInterpreter():
     def __init__(self, device: str = None):
         self.device = device or ("cuda:0" if torch.cuda.is_available() else "cpu")
         # load the Intel/tvp-base model & processor
-        self.processor = AutoProcessor.from_pretrained("Intel/tvp-base")
-        self.model = TvpForVideoGrounding.from_pretrained("Intel/tvp-base").to(self.device)
+        self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                "wwwyyy/TimeZero-Charades-7B",
+                use_sliding_window=True,
+                torch_dtype=torch.bfloat16,
+                attn_implementation="flash_attention_2",
+            ).to(self.device)
         self.model.eval()
+        self.model = torch.compile(self.model)
 
-    @staticmethod
-    def _pyav_decode(container, sampling_rate, num_frames, clip_idx, num_clips, target_fps):
-        # identical to the example’s pyav_decode
-        fps = float(container.streams.video[0].average_rate)
-        clip_size = sampling_rate * num_frames / target_fps * fps
-        delta = max(container.streams.video[0].frames - clip_size, 0)
-        start_idx = delta * clip_idx / num_clips
-        end_idx = start_idx + clip_size - 1
-        timebase = container.streams.video[0].duration / container.streams.video[0].frames
-        start_pts = int(start_idx * timebase)
-        end_pts = int(end_idx * timebase)
-        stream = {"video": 0}
-        container.seek(max(start_pts - 1024, 0), any_frame=False, backward=True,
-                       stream=container.streams.video[0])
-        frames = {}
-        for frame in container.decode(**stream):
-            if frame.pts < start_pts:
-                continue
-            frames[frame.pts] = frame
-            if frame.pts > end_pts:
-                break
-        frames = [frames[k] for k in sorted(frames)]
-        return frames, fps
+        self.processor = AutoProcessor.from_pretrained("wwwyyy/TimeZero-Charades-7B")
 
-    @classmethod
-    def _decode(cls, **kwargs):
-        # identical to the example’s decode
-        frames, fps = cls._pyav_decode(**kwargs)
-        clip_size = kwargs["sampling_rate"] * kwargs["num_frames"] / kwargs["target_fps"] * fps
-        index = torch.linspace(0, clip_size - 1, kwargs["num_frames"])
-        index = torch.clamp(index, 0, len(frames) - 1).long().tolist()
-        frames = [frames[i].to_rgb().to_ndarray() for i in index]
-        return torch.from_numpy(np.stack(frames))  # shape: (num_frames, H, W, 3)
+    def inference(self, video_path, prompt, model, processor, max_new_tokens=2048, device="cuda:0"):
+        messages = [
+            {"role": "user", "content": [
+                    {"type": "text", "text": prompt},
+                    {"video": video_path, 
+                    "total_pixels": 3584 * 28 * 28, 
+                    "min_pixels": 16 * 28 * 28,
+                    },
+                ]
+            },
+        ]
+        text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        
+        image_inputs, video_inputs, video_kwargs = process_vision_info(messages, return_video_kwargs=True)
+        fps_inputs = video_kwargs['fps']
+        
+        inputs = processor(text=[text], images=image_inputs, videos=video_inputs, fps=fps_inputs, padding=True, return_tensors="pt")
+        inputs = inputs.to(device)
 
-    def predict(self, video, question):
-        # 1) sample N frames evenly across the clip using your Video.extract_frame()
-        dur = video.get_video_length()                  # clip_end - clip_start
-        n = self.model.config.num_frames
-        # guard against degenerate
-        if n <= 1:
-            times = [dur / 2.0]
-        else:
-            times = np.linspace(0, dur, num=n, endpoint=False).tolist()
-
-        frames = []
-        for i, t in enumerate(times):
-            try:
-                # t is in [0, dur]; extract_frame handles clip_start internally
-                pil = video.extract_frame(t)
-                arr = np.array(pil)                         # H×W×3
-                frames.append(arr)
-            except:
-                pil = video.extract_frame((t + times[i-1]) / 2)
-                arr = np.array(pil)                         # H×W×3
-                frames.append(arr)
-        raw = torch.from_numpy(np.stack(frames))       # (T, H, W, 3)
-        raw = raw.permute(0, 3, 1, 2)                   # (T, 3, H, W)
-
-        # 2) resize to model’s max_img_size
-        _, _, H, W = raw.shape
-        max_size = self.model.config.max_img_size
-        if H >= W:
-            new_h, new_w = max_size, int(W * max_size / H)
-        else:
-            new_w, new_h = max_size, int(H * max_size / W)
-        size = {"height": new_h, "width": new_w}
-
-        # 3) tokenize text + preprocess video frames
-        text_inputs = self.processor.tokenizer(
-            [question],
-            padding="max_length",
-            truncation=True,
-            max_length=100,
-            return_tensors="pt"
-        )
-        # note: processor.image_processor, not feature_extractor
-        video_inputs = self.processor.image_processor(
-            images=[frame for frame in frames],   # list of H×W×3 np arrays
-            return_tensors="pt",
-            size=size
-        )
-
-        # 4) merge & move to device
-        model_inputs = {**text_inputs, **video_inputs}
-        model_inputs.pop("token_type_ids", None)  # TVP doesn’t expect these
-        for k,v in model_inputs.items():
-            model_inputs[k] = v.to(self.device)
-
-        # 5) forward under no_grad
         with torch.no_grad():
-            outputs = self.model(**model_inputs)
-
-        # 6) normalized → clip‐relative seconds, then add clip_start for absolute
-        start_norm, end_norm = outputs.logits[0].cpu().tolist()
-        rel_start = start_norm * dur
-        rel_end   = end_norm   * dur
-
-        del raw, text_inputs, video_inputs, model_inputs, outputs
+            output_ids = model.generate(**inputs, max_new_tokens=max_new_tokens)
+        
+        generated_ids = [output_ids[i][len(inputs.input_ids[i]):] for i in range(len(output_ids))]
+        output_text = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+        del text, image_inputs, video_inputs, video_kwargs, inputs, output_ids, generated_ids
         torch.cuda.empty_cache()
         gc.collect()
+        return output_text[0]
+
+    def parse_timestamp_output(self, output_string):
+        matches = re.findall(r"(\d+\.?\d*) (to|and) (\d+\.?\d*)", output_string)
+        if not matches:
+            answer_match = re.search(r"<answer>(.*?)</answer>", output_string)
+            if answer_match:
+                answer_content = answer_match.group(1).strip()
+                answer_matches = re.findall(r"(\d+\.?\d*) (to|and) (\d+\.?\d*)", answer_content)
+                if answer_matches:
+                    last_match = answer_matches[-1]
+                    return float(last_match[0]), float(last_match[2])
+            return None, None
+
+        last_match = matches[-1]
+        start_time_str = last_match[0]
+        end_time_str = last_match[2]
+        
+        try:
+            start_time = float(start_time_str)
+            end_time = float(end_time_str)
+            return start_time, end_time
+        except ValueError:
+            return None, None
+
+    def predict(self, video, event):
+        prompt = f"""To accurately pinpoint the event "{event}" in the video, determine the precise time period of the event.
+
+Output your thought process within the <think> </think> tags, including analysis with either specific timestamps (xx.xx) or time ranges (xx.xx to xx.xx) in <timestep> </timestep> tags.
+
+Then, provide the start and end times (in seconds, precise to two decimal places) in the format "start time to end time" within the <answer> </answer> tags. For example: "12.54 to 17.83"."""
+        video.save('tmp.mp4',fps=1)
+        ans = self.inference('tmp.mp4', prompt, self.model, self.processor)
+        rel_start, rel_end = self.parse_timestamp_output(ans)
+        if rel_start is None:
+            rel_start = 0
+            rel_end = int(video.get_video_length())
 
         return [rel_start, rel_end]
 
@@ -699,7 +814,7 @@ class ClipAfterInterpreter(ClipInterpreter):
         video = prog_step.state[video_var]
         frames = prog_step.state[frame_var]
         if len(frames) > 0:
-            clipped_video = video.clip((frames[0] + frames[-1]) / 2, video.get_video_length())
+            clipped_video = video.clip(frames[0], video.get_video_length())
         else:
             clipped_video = video
         prog_step.state[output_var] = clipped_video
@@ -739,6 +854,8 @@ class ClipAroundInterpreter():
     def execute(self,prog_step,inspect=False):
         video_var,frame_no,output_var = self.parse(prog_step)
         video = prog_step.state[video_var]
+        if frame_no == -1:
+            frame_no = video.get_video_length()
         assert frame_no >= 0 and frame_no <= video.get_video_length()
         radius = max(video.get_video_length() / 10, 2)
         start = max(0, frame_no - radius)
@@ -789,6 +906,7 @@ class LengthInterpreter():
         
 def register_step_interpreters():
     return dict(
+        VIDQA=VIDQAInterpreter(),
         VQA=VQAInterpreter(),
         EVAL=EvalInterpreter(),
         RESULT=ResultInterpreter(),

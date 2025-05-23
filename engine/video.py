@@ -114,55 +114,113 @@ class Video:
         frames = []
         times = []
         # Extract frames at each integer second
-        for sec in range(math.floor(duration)):
-            img = self.extract_frame(sec)
-            frames.append(img)
-            times.append(sec)
+        for sec in range(math.ceil(duration)):
+            try:
+                img = self.extract_frame(sec)
+                frames.append(img)
+                times.append(sec)
+            except:
+                pass
         return frames, times
-    def save(self, file_path):
+    def extract_all_frames(self):
         """
-        Saves the video clip (from self.clip_start to self.clip_end) to the specified file path.
-        This method extracts frames from the original video within the clip interval and writes
-        them to a new video file using OpenCV's VideoWriter.
+        Uniformly sample frames across the clip. The total number of frames
+        sampled is max(ceil(duration), min(total_frames_in_clip, 16)),
+        where total_frames_in_clip = fps * duration.
+
+        Returns:
+          - List of PIL.Image frames (RGB)
+          - List of timestamps (in seconds) at which each frame was extracted
+        """
+        duration = self.get_video_length()
+        if duration <= 0:
+            return [], []
+
+        # approximate total frames in this clip
+        total_frames_in_clip = int(self.fps * duration)
+
+        # compute how many to sample
+        num_samples = max(
+            math.ceil(duration),
+            min(total_frames_in_clip, 16)
+        )
+
+        # if only one sample, just take t=0
+        if num_samples == 1:
+            try:
+                img = self.extract_frame(0.0)
+                return [img], [0.0]
+            except ValueError:
+                return [], []
+
+        frames = []
+        times = []
+
+        # pick evenly‐spaced times between 0 and duration
+        for i in range(num_samples):
+            t = (i / (num_samples - 1)) * duration
+            try:
+                img = self.extract_frame(t)
+                frames.append(img)
+                times.append(t)
+            except ValueError:
+                break
+
+        return frames, times
+
+    def save(self, file_path, fps: float = None):
+        """
+        Saves the video clip (from self.clip_start to self.clip_end) to the specified file path,
+        at the given fps (frames per second). If fps is None, uses the original video's fps.
+        Playback speed remains the same; we simply sample at the new rate.
 
         Args:
-            file_path (str): The path where the clipped video will be saved.
+            file_path (str): Where to write the clip.
+            fps (float, optional): Desired output frame rate. Defaults to original fps.
         """
-        # Open the source video.
+        # 1) open source just to grab frame size
         cap = cv2.VideoCapture(self.file_path)
         if not cap.isOpened():
             raise ValueError(f"Failed to open video file: {self.file_path}")
-
-        # Retrieve frame width, height, and use the already stored fps.
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = self.fps  # Using fps stored during initialization.
+        cap.release()
 
-        # Define the codec and create a VideoWriter object.
-        # For MP4 files, 'mp4v' is a common codec.
+        # 2) decide output fps
+        fps_out = self.fps if fps is None else fps
+        if fps_out <= 0:
+            raise ValueError("fps must be > 0")
+
+        # 3) set up writer
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(file_path, fourcc, fps, (width, height))
+        out    = cv2.VideoWriter(file_path, fourcc, fps_out, (width, height))
 
-        # Set the capture position to the start time of the clip (in milliseconds).
-        cap.set(cv2.CAP_PROP_POS_MSEC, self.clip_start * 1000)
+        # 4) compute how many frames to emit
+        duration    = self.clip_end - self.clip_start
+        num_frames  = max(1, math.ceil(duration * fps_out))
 
-        # Read frames and write to the output until we pass the clip_end.
-        while True:
+        # 5) reopen cap for sampling
+        cap = cv2.VideoCapture(self.file_path)
+        if not cap.isOpened():
+            raise ValueError(f"Failed to reopen video file: {self.file_path}")
+
+        for i in range(num_frames):
+            # time offset within clip
+            t_rel = i / fps_out
+            # clamp at end
+            if t_rel > duration:
+                t_rel = duration
+
+            # seek and read
+            cap.set(cv2.CAP_PROP_POS_MSEC, (self.clip_start + t_rel) * 1000)
             ret, frame = cap.read()
             if not ret:
                 break
 
-            # Determine the current playback time in seconds.
-            current_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
-
-            # If the current time exceeds the clip_end, stop writing frames.
-            if current_time > self.clip_end:
-                break
-
-            # Write the frame to the new video file.
             out.write(frame)
 
-        # Release the VideoCapture and VideoWriter resources.
+        # 6) clean up
         cap.release()
         out.release()
+
 

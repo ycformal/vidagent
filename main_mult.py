@@ -16,6 +16,8 @@ from tqdm import tqdm
 import io, tokenize
 
 import argparse
+import numpy as np
+from engine.ssparser import fix
 
 parser = argparse.ArgumentParser(description='Run the video agent experiment')
 parser.add_argument('--model', type=str, default='gpt', help='Model to generate the script')
@@ -59,12 +61,19 @@ key = "tl.qspk.W5DyWbibnie1gou72KsNFzm2xtUltPk3bLuROweJsThTbc[IfLY:nogngujZVN{[l
 key = ''.join([chr(ord(k)-1) for k in key])
 openai.api_key=key
 
+module_list = [
+    "LOC", "CLIP", "CLIP_BEFORE", "CLIP_AFTER", "CLIP_AROUND", "EVAL",
+    "LENGTH", "VQA", "VIDQA", "CAP", "RESULT", 'SELECT'
+]
+
 dataset = pd.read_csv('dataset/NExTVideo/test.csv')
-folder_name = f'results_vidagent_{args.model}_all'
+folder_name = f'results_vidagent_{args.model}_vqa_cap_ssparser'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
 for idx, row in tqdm(dataset.iterrows()):
+    if idx < 327:
+        continue
     if idx == 400:
         break
     # test my method
@@ -87,12 +96,20 @@ for idx, row in tqdm(dataset.iterrows()):
         f.write(f'Question: {question}\n\n')
         f.write(f'Reference Answer: {answer}\n\n')
         f.write(f'Video ID: {row["video"]}\n\n')
-        f.write(f'Program:\n\n```\n{prog}\n```\n')
+        f.write(f'Original program:\n\n```\n{prog}\n```\n')
     init_state = dict(
         VIDEO=Video.read_file(f'dataset/NExTVideo/videos/{video_id}.mp4'),
         CHOICES=[row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]
     )
+    prog = fix(prog, question, module_list, init_state)
+    prog = prog.replace('VIDQA', 'VQA')
+    print(prog)
+    with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
+        f.write(f'Program:\n\n```\n{prog}\n```\n')
     prog_common = '\n'.join(prog.split('\n')[:-3])
+    choices = str([row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]).replace("'", " ")
+    result, _, _ = interpreter.execute(f'ANSWERS0=VIDQA(video=VIDEO,question="{question} Analyze and select your choice among: {choices}")',init_state,inspect=True)
+    print('vidqa:', result)
     try:
         if prog_common != '':
             result, prog_state, html_str = interpreter.execute(prog_common,init_state,inspect=True)
@@ -119,14 +136,22 @@ for idx, row in tqdm(dataset.iterrows()):
         prob_cap = prog_state['PROB']
         with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
             f.write(f'Prob_CAP: {prob_cap}\n\n')
+        new_line = changed_line.replace('VQA', 'VIDQA') + '\n'
+        result_vidqa, prog_state, html_str = interpreter.execute(new_line + '\n'.join(prog.split('\n')[-2:]),prog_state,inspect=True)
+        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
+            f.write(f'Rationale VIDQA:\n\n{html_str}\n\n')
+        prob_vidqa = prog_state['PROB']
+        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
+            f.write(f'Prob_VIDQA: {prob_vidqa}\n\n')
         max_norm_prob_vqa = max(prob_vqa.values()) / sum(prob_vqa.values())
         max_norm_prob_cap = max(prob_cap.values()) / sum(prob_cap.values())
-        if max_norm_prob_vqa >= max_norm_prob_cap:
-            result = result_vqa
-        else:
-            result = result_cap
+        max_norm_prob_vidqa = max(prob_vidqa.values()) / sum(prob_vidqa.values())
+        max_norm_idx = [max_norm_prob_vqa, max_norm_prob_cap, max_norm_prob_vidqa]
+        result_idx = np.argmax(max_norm_idx)
+        result = [result_vqa, result_cap, result_vidqa][result_idx]
     except Exception as e:
-        result = 'Runtime error: ' + str(e)
+        choices = [row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]
+        result, _, _ = interpreter.execute(f'ANSWERS0=VIDQA(video=VIDEO,question="{question}")\nANSWER0=SELECT(question="{question}",information=ANSWERS0,choices=CHOICES)\nFINAL_RESULT=RESULT(var=ANSWER0)',prog_state,inspect=True)
     print(result)
     with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
         f.write(f'Answer: {result}\n\n')

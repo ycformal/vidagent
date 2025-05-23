@@ -1,0 +1,19 @@
+Question: Where is this video taken?
+
+Reference Answer: 4
+
+Video ID: 2500623285
+
+Program:
+
+```
+ANSWERS0=VIDQA(video=VIDEO,question="Where is it?")
+ANSWER0=SELECT(question="Where is this video taken?",information=ANSWERS0,choices=CHOICES)
+FINAL_RESULT=RESULT(var=ANSWER0)
+```
+Rationale:
+
+<hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Where is it?')=<b><span style='color: green;'>The video is set in a kitchen.</span></b></div><hr><div><b><span style='color: blue;'>ANSWER0</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Where is this video taken?, <b><span style='color: darkorange;'>information</span></b>=['The video is set in a kitchen.'], <b><span style='color: darkorange;'>choices</span></b>=['indoors', 'kitchen', 'stage', 'road', 'beach'])=<b><span style='color: green;'>1</span></b></div><hr><div><b><span style='color: red;'>RESULT</span></b> -> <b><span style='color: blue;'>ANSWER0</span></b> -> <b><span style='color: green;'>1</span></b></div><hr>
+
+Answer: 1
+

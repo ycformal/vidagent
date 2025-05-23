@@ -40,25 +40,25 @@ key = "tl.qspk.W5DyWbibnie1gou72KsNFzm2xtUltPk3bLuROweJsThTbc[IfLY:nogngujZVN{[l
 key = ''.join([chr(ord(k)-1) for k in key])
 openai.api_key=key
 
-prog = """ANSWER0=LENGTH(video=VIDEO)
-ANSWER1=EVAL(expr="{ANSWER0}//2")
-VIDEO0=CLIP_AROUND(video=VIDEO,center_frame=ANSWER1)
-FRAME0=LOC(video=VIDEO0,event="The man in black has pushed the equipment up.")
-VIDEO1=CLIP_AFTER(video=VIDEO0,frame=FRAME0)
-ANSWERS0=VQA(video=VIDEO1,question="What is the man in darkgreen doing?")
-ANSWER2=SELECT(question="What does the man in darkgreen do after the man in black pushed the equipment up in the middle of the video?",information=ANSWERS0,choices=CHOICES)
-FINAL_RESULT=RESULT(var=ANSWER2)"""
-question = "What does the man in darkgreen do after the man in black pushed the equipment up in the middle fo the video?"
+prog = """FRAME0=LOC(video=VIDEO,event="The first man has stopped.")
+VIDEO1=CLIP_AFTER(video=VIDEO,frame=FRAME0)
+ANSWERS0=VIDQA(video=VIDEO1,question="What is the first man doing?")
+ANSWER0=SELECT(question="What does the first man do after stopping?",information=ANSWERS0,choices=CHOICES)
+FINAL_RESULT=RESULT(var=ANSWER0)"""
+# prog = """ANSWERS0=VIDQA(video=VIDEO,question="How did the lady position her legs as she was going down?")
+# ANSWER0=SELECT(question="How did the lady position her legs as she was going down?",information=ANSWERS0,choices=CHOICES)
+# FINAL_RESULT=RESULT(var=ANSWER0)"""
+question = "What does the first man do after stopping?"
 
 init_state = dict(
-    VIDEO=Video.read_file(f'dataset/NExTVideo/videos/3042965654.mp4'),
-    CHOICES=['hold the lady s hand','drink from it','look at the man','point to him and smile','walk over']
+    VIDEO=Video.read_file(f'dataset/NExTVideo/videos/2732002300.mp4'),
+    CHOICES=['move to the side', 'grab the back of his chair', 'swing the dog', 'wave', 'smoke']
 )
 
 result, prog_state, html_str = interpreter.execute(prog,init_state,inspect=True)
 
+print(prog_state)
+
 for key, value in init_state.items():
     if isinstance(value, Video):
         value.save(key + '.mp4')
-
-print(prog_state)

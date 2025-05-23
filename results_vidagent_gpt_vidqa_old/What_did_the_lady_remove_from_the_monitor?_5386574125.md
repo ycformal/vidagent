@@ -1,0 +1,20 @@
+Question: What did the lady remove from the monitor?
+
+Reference Answer: 1
+
+Video ID: 5386574125
+
+Program:
+
+```
+ANSWERS0=VIDQA(video=VIDEO,question="What did the lady remove from the monitor?")
+ANSWER0=SELECT(question="What did the lady remove from the monitor?",information=ANSWERS0,choices=CHOICES)
+FINAL_RESULT=RESULT(var=ANSWER0)
+```
+Rationale:
+
+<hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='What did the lady remove from the monitor?')=<b><span style='color: green;'>USER: 
+What did the lady remove from the monitor? ASSISTANT: The image shows a person removing a plastic cover or screen protector from a computer monitor. This type of cover is often used to protect the screen from scratches and minor impacts. It's a common practice to remove such covers when clean</span></b></div><hr><div><b><span style='color: blue;'>ANSWER0</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=What did the lady remove from the monitor?, <b><span style='color: darkorange;'>information</span></b>=["USER: \nWhat did the lady remove from the monitor? ASSISTANT: The image shows a person removing a plastic cover or screen protector from a computer monitor. This type of cover is often used to protect the screen from scratches and minor impacts. It's a common practice to remove such covers when clean"], <b><span style='color: darkorange;'>choices</span></b>=['ball', 'plastic', 'dirt', 'ants', 'towel'])=<b><span style='color: green;'>1</span></b></div><hr><div><b><span style='color: red;'>RESULT</span></b> -> <b><span style='color: blue;'>ANSWER0</span></b> -> <b><span style='color: green;'>1</span></b></div><hr>
+
+Answer: 1
+

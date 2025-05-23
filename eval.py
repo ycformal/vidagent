@@ -35,7 +35,7 @@ def get_answer(file, method1):
     return correct
 
 def main():
-    method = 'vidagent_gpt_all'
+    method = 'vidagent_gpt_vqa_cap_ssparser'
     results = os.listdir(f'results_{method}')
     correct = 0
     total = 0
