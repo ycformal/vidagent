@@ -1,9 +1,12 @@
 import os
 import sys
 import json
+import copy
+from concurrent.futures import ThreadPoolExecutor
+
 module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
-  sys.path.append(module_path)
+    sys.path.append(module_path)
 
 from IPython.core.display import HTML
 from functools import partial
@@ -13,31 +16,31 @@ from prompts.multichoice_tvp import create_prompt
 from engine.video import Video
 import pandas as pd
 from tqdm import tqdm
-import io, tokenize
+import io, tokenize, time, json
 
 import argparse
 import numpy as np
 from engine.ssparser import fix
+from sentence_transformers import SentenceTransformer, util
+import torch
+import openai
+import threading
 
+# ─── Argparse and setup ────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description='Run the video agent experiment')
 parser.add_argument('--model', type=str, default='gpt', help='Model to generate the script')
 args = parser.parse_args()
 
-def parse_step(step_str,partial=False):
+def parse_step(step_str, partial=False):
     tokens = list(tokenize.generate_tokens(io.StringIO(step_str).readline))
     output_var = tokens[0].string
     step_name = tokens[2].string
-    parsed_result = dict(
-        output_var=output_var,
-        step_name=step_name)
+    parsed_result = dict(output_var=output_var, step_name=step_name)
     if partial:
         return parsed_result
-
-    arg_tokens = [token for token in tokens[4:-3] if token.string not in [',','=']]
-    num_tokens = len(arg_tokens) // 2
-    args = dict()
-    for i in range(num_tokens):
-        args[arg_tokens[2*i].string] = arg_tokens[2*i+1].string
+    arg_tokens = [t for t in tokens[4:-3] if t.string not in {',', '='}]
+    args = {arg_tokens[2*i].string: arg_tokens[2*i+1].string
+            for i in range(len(arg_tokens)//2)}
     parsed_result['args'] = args
     return parsed_result
 
@@ -53,105 +56,200 @@ elif args.model == 'mistral':
 else:
     raise ValueError('Invalid model name')
 
-prompter = partial(create_prompt,method='all')
-generator = ProgramGenerator(prompter=prompter, model_name_or_path=model)
+prompter    = partial(create_prompt, method='all')
+generator   = ProgramGenerator(prompter=prompter, model_name_or_path=model)
 interpreter = ProgramInterpreter()
-import openai
+
+# decode OpenAI key
 key = "tl.qspk.W5DyWbibnie1gou72KsNFzm2xtUltPk3bLuROweJsThTbc[IfLY:nogngujZVN{[ljus5rjxdLU4CmclGK{BHtxj`vvD6PLQiyZ1121yskCtUEk9bjQXX3.B1`25:4NQ[fuNnJGBdwMQHK[Tewgt:e4h.SNB"
-key = ''.join([chr(ord(k)-1) for k in key])
-openai.api_key=key
+key = ''.join(chr(ord(k)-1) for k in key)
+openai.api_key = key
 
 module_list = [
     "LOC", "CLIP", "CLIP_BEFORE", "CLIP_AFTER", "CLIP_AROUND", "EVAL",
-    "LENGTH", "VQA", "VIDQA", "CAP", "RESULT", 'SELECT'
+    "LENGTH", "VQA", "VIDQA", "CAP", "RESULT", "SELECT"
 ]
 
-dataset = pd.read_csv('dataset/NExTVideo/test.csv')
-folder_name = f'results_vidagent_{args.model}_vqa_cap_ssparser'
-if not os.path.exists(folder_name):
-    os.makedirs(folder_name)
+dataset     = pd.read_csv('dataset/NExTVideo/test.csv')
+folder_name = f'results_vidagent_{args.model}_all'
+os.makedirs(folder_name, exist_ok=True)
 
-for idx, row in tqdm(dataset.iterrows()):
-    if idx < 327:
+_model = SentenceTransformer("hkunlp/instructor-xl")
+
+def analyze_distribution(prob_dist):
+    total   = sum(prob_dist.values())
+    max_key = max(prob_dist, key=prob_dist.get)
+    max_val = prob_dist[max_key]
+    return max_key, max_val / total if total != 0 else 0
+
+def vote(weights, ratios, keys, choices):
+    scores       = [w * r for w, r in zip(weights, ratios)]
+    best_source  = max(range(len(scores)), key=lambda i: scores[i])
+    selected_key = keys[best_source]
+    key_emb      = _model.encode(selected_key, convert_to_tensor=True)
+    choice_embs  = _model.encode(choices, convert_to_tensor=True)
+    sims         = util.cos_sim(key_emb, choice_embs)[0]
+    return int(sims.argmax())
+
+def select(key, choices):
+    key_emb      = _model.encode(key, convert_to_tensor=True)
+    choice_embs  = _model.encode(choices, convert_to_tensor=True)
+    sims         = util.cos_sim(key_emb, choice_embs)[0]
+    return int(sims.argmax())
+
+# --- NEW: clone_state to deep-copy tensors on the same device ---
+def clone_state(state):
+    new = {}
+    for k, v in state.items():
+        if isinstance(v, torch.Tensor):
+            new[k] = v.clone()
+        else:
+            new[k] = copy.deepcopy(v)
+    return new
+
+# ─── Main loop ─────────────────────────────────────────────────────────────────
+for idx, row in tqdm(dataset.iterrows(), total=len(dataset)):
+    if idx < 121:
         continue
-    if idx == 400:
-        break
-    # test my method
+    if idx == 400: break
+
     question = row['question'].capitalize() + '?'
-    print(question)
     video_id = row['video']
-    answer = row['answer']
-    print(video_id)
-    print('choices:', row['a0'], row['a1'], row['a2'], row['a3'], row['a4'])
-    print('reference answer:', answer)
+    choices  = [row[f'a{i}'] for i in range(5)]
+    answer   = row['answer']
+    md_path  = f'{folder_name}/{question.replace(" ", "_")}_{video_id}.md'
+
+    # nested try/except for generation
     try:
-        prog,_ = generator.generate(dict(question=question))
-    except Exception as e:
+        prog, _ = generator.generate(dict(question=question))
+    except Exception:
         try:
-            prog,_ = generator.generate(dict(question=question))
-        except Exception as e:
-            prog,_ = generator.generate(dict(question=question))
+            prog, _ = generator.generate(dict(question=question))
+        except Exception:
+            prog, _ = generator.generate(dict(question=question))
+
+    print(question, video_id)
+    print('choices:', ', '.join(choices), 'reference answer:', answer)
     print(prog)
-    with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','w') as f:
+
+    # write header + original program
+    with open(md_path, 'w') as f:
         f.write(f'Question: {question}\n\n')
         f.write(f'Reference Answer: {answer}\n\n')
-        f.write(f'Video ID: {row["video"]}\n\n')
-        f.write(f'Original program:\n\n```\n{prog}\n```\n')
-    init_state = dict(
-        VIDEO=Video.read_file(f'dataset/NExTVideo/videos/{video_id}.mp4'),
-        CHOICES=[row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]
-    )
-    prog = fix(prog, question, module_list, init_state)
-    prog = prog.replace('VIDQA', 'VQA')
+        f.write(f'Video ID: {video_id}\n\n')
+        f.write('Original program:\n\n```\n' + prog + '\n```\n\n')
+
+    # fix program and write
+    init_state = {
+        "VIDEO": Video.read_file(f'dataset/NExTVideo/videos/{video_id}.mp4'),
+        "CHOICES": choices
+    }
+    prog = fix(prog, question, module_list, init_state).replace('VIDQA', 'VQA')
     print(prog)
-    with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-        f.write(f'Program:\n\n```\n{prog}\n```\n')
-    prog_common = '\n'.join(prog.split('\n')[:-3])
-    choices = str([row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]).replace("'", " ")
-    result, _, _ = interpreter.execute(f'ANSWERS0=VIDQA(video=VIDEO,question="{question} Analyze and select your choice among: {choices}")',init_state,inspect=True)
-    print('vidqa:', result)
-    try:
-        if prog_common != '':
-            result, prog_state, html_str = interpreter.execute(prog_common,init_state,inspect=True)
-            with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-                f.write(f'Rationale common:\n\n{html_str}\n\n')
-        else:
-            prog_state = init_state
-            with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-                f.write(f'Rationale common:\n\n\n\n')
-        result_vqa, prog_state, html_str = interpreter.execute('\n'.join(prog.split('\n')[-3:]),prog_state,inspect=True)
-        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-            f.write(f'Rationale VQA:\n\n{html_str}\n\n')
-        prob_vqa = prog_state['PROB']
-        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-            f.write(f'Prob_VQA: {prob_vqa}\n\n')
-        changed_line = prog.split('\n')[-3]
-        parse_result = parse_step(changed_line)
-        output_var = parse_result['output_var']
-        video_var = parse_result['args']['video']
-        new_line = f'{output_var}=CAP(video={video_var})\n'
-        result_cap, prog_state, html_str = interpreter.execute(new_line + '\n'.join(prog.split('\n')[-2:]),prog_state,inspect=True)
-        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-            f.write(f'Rationale CAP:\n\n{html_str}\n\n')
-        prob_cap = prog_state['PROB']
-        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-            f.write(f'Prob_CAP: {prob_cap}\n\n')
-        new_line = changed_line.replace('VQA', 'VIDQA') + '\n'
-        result_vidqa, prog_state, html_str = interpreter.execute(new_line + '\n'.join(prog.split('\n')[-2:]),prog_state,inspect=True)
-        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-            f.write(f'Rationale VIDQA:\n\n{html_str}\n\n')
-        prob_vidqa = prog_state['PROB']
-        with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
-            f.write(f'Prob_VIDQA: {prob_vidqa}\n\n')
-        max_norm_prob_vqa = max(prob_vqa.values()) / sum(prob_vqa.values())
-        max_norm_prob_cap = max(prob_cap.values()) / sum(prob_cap.values())
-        max_norm_prob_vidqa = max(prob_vidqa.values()) / sum(prob_vidqa.values())
-        max_norm_idx = [max_norm_prob_vqa, max_norm_prob_cap, max_norm_prob_vidqa]
-        result_idx = np.argmax(max_norm_idx)
-        result = [result_vqa, result_cap, result_vidqa][result_idx]
-    except Exception as e:
-        choices = [row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]
-        result, _, _ = interpreter.execute(f'ANSWERS0=VIDQA(video=VIDEO,question="{question}")\nANSWER0=SELECT(question="{question}",information=ANSWERS0,choices=CHOICES)\nFINAL_RESULT=RESULT(var=ANSWER0)',prog_state,inspect=True)
+    with open(md_path, 'a') as f:
+        f.write('Program:\n\n```\n' + prog + '\n```\n\n')
+
+    # execute common prefix exactly once
+    lines       = prog.split('\n')
+    prog_common = '\n'.join(lines[:-1]).strip()
+    if prog_common:
+        _, prog_state, html_common = interpreter.execute(prog_common, init_state, inspect=True)
+        with open(md_path, 'a') as f:
+            f.write(f'Rationale common:\n\n{html_common}\n\n')
+    else:
+        prog_state = init_state
+        with open(md_path, 'a') as f:
+            f.write('Rationale common:\n\n\n\n')
+
+
+    # snapshot common_state for branching
+    common_state = clone_state(prog_state)
+
+    # prepare branch snippets
+    snippet_vqa   = lines[-1]
+    pr            = parse_step(snippet_vqa)
+    out_var, vid_var = pr['output_var'], pr['args']['video']
+    snippet_cap   = f'{out_var}=CAP(video={vid_var})'
+    snippet_vidqa = snippet_vqa.replace('VQA','VIDQA')
+
+    snippet_vidqa += f'\nSELECTED=SELECT(question="{question}",information={out_var},choices=CHOICES)'
+
+    # try:
+    # run branches in parallel, reusing the same common_state structure
+    def run_branch(code):
+        state = clone_state(common_state)
+        return interpreter.execute(code, state, inspect=True)
+
+    result, state_vidqa, html_vidqa = run_branch(snippet_vidqa)
+    
+    prob_vidqa = state_vidqa['PROB']
+
+    with open(md_path, 'a') as f:
+        f.write(f'Rationale VIDQA:\n\n{html_vidqa}\n\n')
+        f.write(f'Prob_VIDQA: {prob_vidqa}\n\n')
+
+    kvid, rvid = analyze_distribution(prob_vidqa)
+
+    if prob_vidqa[kvid] < 85 and rvid < 0.8:
+            
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            fv   = ex.submit(run_branch, snippet_vqa)
+            fc   = ex.submit(run_branch, snippet_cap)
+
+            answers_vqa, state_vqa,   html_vqa   = fv.result()
+            answers_cap, state_cap,   html_cap   = fc.result()
+
+        prompt = f"Per frame VQA: {answers_vqa}\nPer frame caption: {answers_cap}\n{state_vidqa[out_var][0]}\nInitial guess combine VLM and video caption: {kvid} (confidence score: {rvid})\n\nQuestion: {question}\nChoices: {choices}\n\nSelect the best choice based on the given information. Trust the caption if and only if: the caption of any frame or the video caption explicitly supports an option, while the initial guess has a confidence lower than 60%. Note: if something is not mentioned, then it MAY happen because the captions are coarse grained. The confidence score measures how likely the initial guess may be overwritten. If you cannot find any other option strongly supported by either per frame VQA or captions, trust the initial guess even though the confidence is low."
+
+        for retry in range(10):
+            try:
+                response = openai.ChatCompletion.create(
+                        model="gpt-4.1-mini",
+                        messages=[
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0,
+                        max_tokens=1000,
+                    )
+
+                analysis = response['choices'][0]['message']['content']
+
+                response = openai.ChatCompletion.create(
+                        model="gpt-4.1-mini",
+                        messages=[
+                            {"role": "user", "content": prompt},
+                            {"role": "assistant", "content": analysis},
+                            {"role": "user", "content": "Directly give me the answer in json format: {\"answer\": \"<your answer>\"}"}
+                        ],
+                        temperature=0,
+                        max_tokens=1000,
+                    )
+
+                break
+            except:
+                print('LLM query fails, retry in 1 sec ...')
+                time.sleep(1)
+
+        resp = response['choices'][0]['message']['content']
+        print(resp)
+
+        result = select(json.loads(resp)["answer"], choices)
+
+        with open(md_path, 'a') as f:
+            f.write(f'Rationale VQA:\n\n{html_vqa}\n\n')
+            f.write(f'Rationale CAP:\n\n{html_cap}\n\n')
+            f.write(f'LLM analysis:\n\n{analysis}\n\n')
+
+    # except Exception:
+    #     # fallback unchanged
+    #     result, _, _ = interpreter.execute(
+    #         f'ANSWERS0=VIDQA(video=VIDEO,question="{question}")\n'
+    #         f'ANSWER0=SELECT(question="{question}",information=ANSWERS0,choices=CHOICES)\n'
+    #         f'FINAL_RESULT=RESULT(var=ANSWER0)',
+    #         prog_state, inspect=True
+    #     )
+
     print(result)
-    with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
+    with open(md_path, 'a') as f:
         f.write(f'Answer: {result}\n\n')
+

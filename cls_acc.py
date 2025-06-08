@@ -28,7 +28,7 @@ def get_answer(file, method1):
         question = re.search(r'Question: (.+)', content)
         question = question.group(1).strip()
         question = question[0].lower() + question[1:-1]
-        row = dataset[dataset['question'] == question]
+        row = dataset[dataset['question'].str.lower() == question.lower()]
         if row.empty:
             print(f'Question not found in dataset: {question}')
             q_type = None
@@ -45,7 +45,7 @@ def get_answer(file, method1):
     return correct
 
 def main():
-    method = 'vidagent_gpt_vidqa_ssparser'
+    method = 'vlm_qwen_open_ended_16'
     results = os.listdir(f'results_{method}')
     correct = 0
     total = 0

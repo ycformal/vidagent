@@ -1,0 +1,34 @@
+Question: How many women are there on stage?
+
+Reference Answer: 4
+
+Video ID: 6042037966
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How many women are there on stage?|How many people are on stage?|What is the gender ratio on stage?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How many women are there on stage?|How many people are on stage?|What is the gender ratio on stage?")
+SELECTED=SELECT(question="How many women are there on stage?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How many women are there on stage?|How many people are on stage?|What is the gender ratio on stage?')=<b><span style='color: green;'>User: How many women are there on stage?
+Assistant: one.
+
+User: How many people are on stage?
+Assistant: There are five people on stage.
+
+User: What is the gender ratio on stage?
+Assistant: The stage has a balanced gender ratio with two women and three men.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How many women are there on stage?, <b><span style='color: darkorange;'>information</span></b>=['User: How many women are there on stage?\nAssistant: one.\n\nUser: How many people are on stage?\nAssistant: There are five people on stage.\n\nUser: What is the gender ratio on stage?\nAssistant: The stage has a balanced gender ratio with two women and three men.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['five', 'two', 'four', 'seven', 'one'])=<b><span style='color: green;'>1</span></b></div><hr>
+
+Answer: 1
+

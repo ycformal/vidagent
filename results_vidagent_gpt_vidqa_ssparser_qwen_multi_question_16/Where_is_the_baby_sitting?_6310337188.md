@@ -1,0 +1,43 @@
+Question: Where is the baby sitting?
+
+Reference Answer: 0
+
+Video ID: 6310337188
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Where is the baby sitting?|What is the location of the baby?|What is the baby's position?|What is the baby's surroundings?|Is the baby sitting on an object or surface?|What is the color of the object or surface the baby is sitting on?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Where is the baby sitting?|What is the location of the baby?|What is the baby's position?|What is the baby's surroundings?|Is the baby sitting on an object or surface?|What is the color of the object or surface the baby is sitting on?")
+SELECTED=SELECT(question="Where is the baby sitting?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Where is the baby sitting?|What is the location of the baby?|What is the baby's position?|What is the baby's surroundings?|Is the baby sitting on an object or surface?|What is the color of the object or surface the baby is sitting on?')=<b><span style='color: green;'>User: Where is the baby sitting?
+Assistant: The baby is sitting on a white surface, possibly a bed or changing table.
+
+User: What is the location of the baby?
+Assistant: The baby is sitting on a white surface, possibly a bed or changing table.
+
+User: What is the baby's position?
+Assistant: The baby is sitting on a white surface, possibly a bed or changing table.
+
+User: What is the baby's surroundings?
+Assistant: The baby is sitting on a white surface, possibly a bed or changing table, with a blue and white patterned pillow in the background.
+
+User: Is the baby sitting on an object or surface?
+Assistant: Yes, the baby is sitting on a white surface.
+
+User: What is the color of the object or surface the baby is sitting on?
+Assistant: The baby is sitting on a white surface.
+
+Note: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant.</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Where is the baby sitting?, <b><span style='color: darkorange;'>information</span></b>=["User: Where is the baby sitting?\nAssistant: The baby is sitting on a white surface, possibly a bed or changing table.\n\nUser: What is the location of the baby?\nAssistant: The baby is sitting on a white surface, possibly a bed or changing table.\n\nUser: What is the baby's position?\nAssistant: The baby is sitting on a white surface, possibly a bed or changing table.\n\nUser: What is the baby's surroundings?\nAssistant: The baby is sitting on a white surface, possibly a bed or changing table, with a blue and white patterned pillow in the background.\n\nUser: Is the baby sitting on an object or surface?\nAssistant: Yes, the baby is sitting on a white surface.\n\nUser: What is the color of the object or surface the baby is sitting on?\nAssistant: The baby is sitting on a white surface.\n\nNote: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant."], <b><span style='color: darkorange;'>choices</span></b>=['on the bed', 'crib', 'chair', 'high chair', 'grass'])=<b><span style='color: green;'>0</span></b></div><hr>
+
+Answer: 0
+

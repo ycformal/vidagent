@@ -1,0 +1,49 @@
+Question: How did the girl eat ice cream?
+
+Reference Answer: 0
+
+Video ID: 5622582668
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How did the girl eat ice cream?|What is the girl doing?|What is the girl's mood while eating ice cream?|What is the girl's body position while eating ice cream?|What is the girl's facial expression while eating ice cream?|What is the girl's hand position while eating ice cream?|What is the girl's eating style?|What is the girl's reaction to the ice cream?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How did the girl eat ice cream?|What is the girl doing?|What is the girl's mood while eating ice cream?|What is the girl's body position while eating ice cream?|What is the girl's facial expression while eating ice cream?|What is the girl's hand position while eating ice cream?|What is the girl's eating style?|What is the girl's reaction to the ice cream?")
+SELECTED=SELECT(question="How did the girl eat ice cream?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How did the girl eat ice cream?|What is the girl doing?|What is the girl's mood while eating ice cream?|What is the girl's body position while eating ice cream?|What is the girl's facial expression while eating ice cream?|What is the girl's hand position while eating ice cream?|What is the girl's eating style?|What is the girl's reaction to the ice cream?')=<b><span style='color: green;'>User: How did the girl eat ice cream?
+Assistant: The girl used a white plastic spoon to scoop the ice cream and bring it to her mouth.
+
+User: What is the girl doing?
+Assistant: The girl is enjoying her blue ice cream.
+
+User: What is the girl's mood while eating ice cream?
+Assistant: The girl appears to be enjoying her ice cream, as indicated by her actions and expressions.
+
+User: What is the girl's body position while eating ice cream?
+Assistant: The girl is seated at a wooden table, holding the ice cream cup with her left hand and using a white plastic spoon to scoop the ice cream.
+
+User: What is the girl's facial expression while eating ice cream?
+Assistant: The girl's facial expressions range from focused to content as she enjoys her treat.
+
+User: What is the girl's hand position while eating ice cream?
+Assistant: The girl's right hand is holding the bowl and her left hand is holding a spoon.
+
+User: What is the girl's eating style?
+Assistant: The girl's eating style is casual and relaxed.
+
+User: What is the girl's reaction to the ice cream?
+Assistant: The girl appears to be enjoying the ice cream, as indicated by her actions of scooping and eating it.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How did the girl eat ice cream?, <b><span style='color: darkorange;'>information</span></b>=["User: How did the girl eat ice cream?\nAssistant: The girl used a white plastic spoon to scoop the ice cream and bring it to her mouth.\n\nUser: What is the girl doing?\nAssistant: The girl is enjoying her blue ice cream.\n\nUser: What is the girl's mood while eating ice cream?\nAssistant: The girl appears to be enjoying her ice cream, as indicated by her actions and expressions.\n\nUser: What is the girl's body position while eating ice cream?\nAssistant: The girl is seated at a wooden table, holding the ice cream cup with her left hand and using a white plastic spoon to scoop the ice cream.\n\nUser: What is the girl's facial expression while eating ice cream?\nAssistant: The girl's facial expressions range from focused to content as she enjoys her treat.\n\nUser: What is the girl's hand position while eating ice cream?\nAssistant: The girl's right hand is holding the bowl and her left hand is holding a spoon.\n\nUser: What is the girl's eating style?\nAssistant: The girl's eating style is casual and relaxed.\n\nUser: What is the girl's reaction to the ice cream?\nAssistant: The girl appears to be enjoying the ice cream, as indicated by her actions of scooping and eating it.\n\n"], <b><span style='color: darkorange;'>choices</span></b>=['with a spoon', 'with her hands', 'with a fork', 'mother fed her', 'father fed her'])=<b><span style='color: green;'>0</span></b></div><hr>
+
+Answer: 0
+

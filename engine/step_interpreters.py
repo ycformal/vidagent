@@ -1,7 +1,7 @@
 import torch
 import io, tokenize
 from PIL import Image
-from transformers import (OwlViTProcessor, OwlViTForObjectDetection, AutoProcessor, BlipForQuestionAnswering, TvpForVideoGrounding, AutoModelForCausalLM, Blip2Processor, Blip2ForConditionalGeneration, Qwen2_5_VLForConditionalGeneration)
+from transformers import (OwlViTProcessor, OwlViTForObjectDetection, AutoProcessor, BlipForQuestionAnswering, TvpForVideoGrounding, AutoModelForCausalLM, Blip2Processor, Blip2ForConditionalGeneration, Qwen2_5_VLForConditionalGeneration, LlavaNextVideoProcessor, LlavaNextVideoForConditionalGeneration)
 from nltk.stem import PorterStemmer
 import nltk
 from .clustering import cluster
@@ -20,6 +20,11 @@ from llava.conversation import conv_templates
 import copy
 import re
 from qwen_vl_utils import process_vision_info
+from sentence_transformers import SentenceTransformer, util
+
+import threading
+
+gpu_lock = threading.Lock()
 
 nltk.download('punkt_tab') # If there's error message, just modify the package name according to what the error message says
 
@@ -148,6 +153,35 @@ class ResultInterpreter():
 
         return output
 
+class FlagInterpreter():
+    step_name = 'FLAG'
+
+    def __init__(self):
+        print(f'Registering {self.step_name} step')
+
+    def parse(self,prog_step):
+        parse_result = parse_step(prog_step.prog_str)
+        step_name = parse_result['step_name']
+        output_var = parse_result['output_var']
+        begin = parse_result['args']['begin']
+        middle = parse_result['args']['middle']
+        end = parse_result['args']['end']
+        assert(step_name==self.step_name)
+        return begin, middle, end, output_var
+
+    def html(self):
+            
+        return f"""<div>FLAG is only for internal use.</div>"""
+
+    def execute(self,prog_step,inspect=False):
+        begin, middle, end, output_var = self.parse(prog_step)
+        prog_step.state[output_var] = {'begin': eval(begin), 'middle': eval(middle), 'end': eval(end)}
+        if inspect:
+            html_str = self.html()
+            return {'begin': eval(begin), 'middle': eval(middle), 'end': eval(end)}, html_str
+
+        return {'begin': eval(begin), 'middle': eval(middle), 'end': eval(end)}
+
 class VQAInterpreter():
     step_name = 'VQA'
 
@@ -155,10 +189,22 @@ class VQAInterpreter():
         print(f'Registering {self.step_name} step')
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         # self.processor = AutoProcessor.from_pretrained("Salesforce/blip-vqa-capfilt-large")
-        self.processor = Blip2Processor.from_pretrained(f"Salesforce/blip2-flan-t5-xxl")
+        # self.processor = Blip2Processor.from_pretrained(f"Salesforce/blip2-flan-t5-xxl")
         # self.model = BlipForQuestionAnswering.from_pretrained("Salesforce/blip-vqa-capfilt-large").to(self.device)
-        self.model = Blip2ForConditionalGeneration.from_pretrained("Salesforce/blip2-flan-t5-xxl").to(self.device)
+        # self.model = Blip2ForConditionalGeneration.from_pretrained("Salesforce/blip2-flan-t5-xxl").to(self.device)
+        # self.model.eval()
+        self.model = AutoModelForCausalLM.from_pretrained(
+            "microsoft/Phi-3.5-vision-instruct", 
+            device_map="cuda", 
+            trust_remote_code=True, 
+            torch_dtype="auto", 
+            _attn_implementation='flash_attention_2'    
+        )
         self.model.eval()
+        self.processor = AutoProcessor.from_pretrained("microsoft/Phi-3.5-vision-instruct", 
+            trust_remote_code=True, 
+            num_crops=4
+            )
         self.stemmer = PorterStemmer()
 
     def parse(self,prog_step):
@@ -171,19 +217,78 @@ class VQAInterpreter():
         assert(step_name==self.step_name)
         return video_var,question,output_var
 
-    def predict(self,video,question):
-        # get images in the video with 1s interval. video is cv2 loaded, images should be RGB pillow format
-        images, _ = video.extract_frames()
-        results = []
-        for img in images:
-            encoding = self.processor(img,question,return_tensors='pt')
-            encoding = {k:v.to(self.device) for k,v in encoding.items()}
-            with torch.no_grad():
-                outputs = self.model.generate(**encoding)
-                result = self.processor.decode(outputs[0], skip_special_tokens=True)
-                print(result)
-                results.append(result)
-        return results
+    def predict(self, video, questions):
+        # 1) extract all frames
+        images, _ = video.extract_all_frames(max_frame_num=8)
+        if len(images) == 0:
+            return []
+
+        answers = []
+
+        for image in images:
+            image.thumbnail((640,640),Image.Resampling.LANCZOS)
+            answer = ''
+
+            for i in range(len(questions)):
+                imgs = [image]
+                messages = [
+                    {"role": "user", "content": "<|image_1|>\n" + questions[i]},
+                ]
+                prompt = self.processor.tokenizer.apply_chat_template(
+                    messages, 
+                    tokenize=False, 
+                    add_generation_prompt=True
+                )
+                inputs = self.processor(prompt, imgs, return_tensors="pt").to("cuda:0")
+                generation_args = { 
+                    "max_new_tokens": 1024, 
+                    "temperature": 0.0, 
+                    "do_sample": False, 
+                }
+                with gpu_lock:
+                    with torch.inference_mode():
+                        generate_ids = self.model.generate(**inputs, 
+                        eos_token_id=self.processor.tokenizer.eos_token_id, 
+                        **generation_args
+                        )
+                generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
+                response = self.processor.batch_decode(generate_ids, 
+                    skip_special_tokens=True, 
+                    clean_up_tokenization_spaces=False)[0]
+                
+                answer += 'User: ' + questions[i] + '\nAssistant: ' + response + '\n\n'
+            answer += 'Note: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant.'
+            answers.append(answer)
+        # # 2) build a list of identical questions, one per image
+        # questions = [question] * len(images)
+
+        # # 3) single batched encoding
+        # encoding = self.processor(
+        #     images,
+        #     questions,
+        #     return_tensors="pt",
+        #     padding=True,        # pad to the longest in the batch
+        #     truncation=True      # if your questions might be long
+        # ).to(self.device)
+
+        # # 4) one batched generate
+        # with gpu_lock:
+        #     with torch.no_grad():
+        #         outputs = self.model.generate(
+        #             **encoding,
+        #             max_new_tokens=64,  # tune as needed
+        #             num_beams=5,        # optional
+        #             do_sample=False
+        #         )
+
+        # # 5) decode each answer
+        # answers = [
+        #     self.processor.decode(
+        #         out_ids, skip_special_tokens=True
+        #     ).strip()
+        #     for out_ids in outputs
+        # ]
+        return answers
 
     def html(self,img,question,answer,output_var):
         step_name = html_step_name(self.step_name)
@@ -197,7 +302,32 @@ class VQAInterpreter():
     def execute(self,prog_step,inspect=False):
         video_var,question,output_var = self.parse(prog_step)
         video = prog_step.state[video_var]
-        answers = self.predict(video,question)
+
+        questions = question.split('|')
+
+        questions[0] = prog_step.state['QUESTION']
+
+        if 'TIME' in prog_step.state:
+            time_flag = prog_step.state['TIME']
+            
+            time_suffix = ''
+            if time_flag['begin'] is not None and '[' in time_flag['begin']:
+                time_suffix = 'near the beginning of the original video'
+            elif time_flag['middle'] is not None and '[' in time_flag['middle']:
+                time_suffix = 'near the middle of the original video'
+            elif time_flag['end'] is not None and '[' in time_flag['end']:
+                time_suffix = 'near the end of the original video'
+
+            for i in range(len(questions)):
+                if video_var + '_EVENT' in prog_step.state:
+                    if time_suffix == '':
+                        questions[i] = 'This is a frame from the original video ' + prog_step.state[video_var + '_TIME'] + " " + prog_step.state[video_var + '_EVENT'].lower() + '\n' + questions[i]
+                    else:
+                        questions[i] = 'This is a frame ' + time_suffix + ' ' + prog_step.state[video_var + '_TIME'] + " " + prog_step.state[video_var + '_EVENT'].lower() + '\n' + questions[i]
+                elif time_suffix != '':
+                    questions[i] = 'This is a frame ' + time_suffix + '.\n' + questions[i]
+
+        answers = self.predict(video,questions)
         prog_step.state[output_var] = answers
         if inspect:
             # get the middle frame of the video
@@ -213,6 +343,240 @@ class VIDQAInterpreter:
 
     def __init__(
         self,
+        model_choice: str = "qwen",
+        pretrained: str = "lmms-lab/LLaVA-Video-7B-Qwen2",
+        model_name: str = "llava_qwen",
+        llava_model_id: str = "llava-hf/LLaVA-NeXT-Video-7B-hf",
+        max_frames: int = 64,
+        conv_template: str = "qwen_1_5",
+        device: str = "cuda"
+    ):
+        print(f"Registering {self.step_name} step with {pretrained}")
+        self.device = device if torch.cuda.is_available() else "cpu"
+        self.max_frames = max_frames
+        self.conv_template = conv_template
+
+        if model_choice == "qwen":
+            # Load the original Qwen-based model
+            self.tokenizer, self.model, self.image_processor, _ = load_pretrained_model(
+                pretrained, None, model_name
+            )
+            self.model.to(self.device).eval()
+
+        elif model_choice == "llava":
+            # Load the LLaVA-NeXT-Video model and processor
+            self.processor = LlavaNextVideoProcessor.from_pretrained(llava_model_id)
+            self.model = LlavaNextVideoForConditionalGeneration.from_pretrained(
+                llava_model_id,
+                torch_dtype=torch.float16,
+                low_cpu_mem_usage=True,
+            ).to(self.device).eval()
+
+
+    def parse(self, prog_step):
+        pr = parse_step(prog_step.prog_str)
+        assert pr['step_name'] == self.step_name
+        video_var = pr['args']['video']
+        question = eval(pr['args']['question'])
+        output_var = pr['output_var']
+        return video_var, question, output_var
+
+    def predict_qwen(self, video, questions, choices):
+
+        frames, timestamps = video.extract_all_frames()
+        frames_np = np.stack([np.array(img) for img in frames])
+        frame_time_str = ",".join(f"{t:.2f}s" for t in timestamps)
+        video_time = video.get_video_length()
+
+        # preprocess frames to pixel_values tensor
+        pixel_values = self.image_processor.preprocess(
+            frames_np, return_tensors="pt"
+        )["pixel_values"].to(self.device).half()
+        # pack into list as the model expects
+        video_inputs = [pixel_values]
+
+        # build conversation
+        time_instr = (
+            f"The video lasts for {video_time:.2f} seconds, "
+            f"and {pixel_values.shape[1]} frames are uniformly sampled at {frame_time_str}. "
+        )
+
+        answer = ''
+
+        for i in range(len(questions)):
+            if i == 0:
+                prompt_text = DEFAULT_IMAGE_TOKEN + "\n" + time_instr + "\n" + questions[i] + f"\nChoices (choose one): {', '.join(choices)}."
+                prompt_text = DEFAULT_IMAGE_TOKEN + "\n" + time_instr + "\n" + questions[i]
+            else:
+                prompt_text = DEFAULT_IMAGE_TOKEN + "\n" + time_instr + "\n" + questions[i]
+
+            conv = copy.deepcopy(conv_templates[self.conv_template])
+            conv.append_message(conv.roles[0], prompt_text)
+            conv.append_message(conv.roles[1], None)
+            prompt = conv.get_prompt()
+
+            # tokenize with image token
+            input_ids = tokenizer_image_token(
+                prompt,
+                self.tokenizer,
+                IMAGE_TOKEN_INDEX,
+                return_tensors="pt"
+            ).unsqueeze(0).to(self.device)
+
+            # generate
+            with gpu_lock:
+                with torch.no_grad():
+                    outputs = self.model.generate(
+                        input_ids,
+                        images=video_inputs,
+                        modalities=["video"],
+                        do_sample=False,
+                        temperature=0.0,
+                        max_new_tokens=512,
+                    )
+
+            answer += 'User: ' + questions[i] + '\nAssistant: ' + self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip() + '\n\n'
+
+            del input_ids, outputs, prompt
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            # prompt_text = DEFAULT_IMAGE_TOKEN + "\n" + time_instr + f"\nPlease describe this video in detail."
+
+            # conv = copy.deepcopy(conv_templates[self.conv_template])
+            # conv.append_message(conv.roles[0], prompt_text)
+            # conv.append_message(conv.roles[1], None)
+            # prompt = conv.get_prompt()
+
+            # # tokenize with image token
+            # input_ids = tokenizer_image_token(
+            #     prompt,
+            #     self.tokenizer,
+            #     IMAGE_TOKEN_INDEX,
+            #     return_tensors="pt"
+            # ).unsqueeze(0).to(self.device)
+
+            # # generate
+            # with gpu_lock:
+            #     with torch.no_grad():
+            #         outputs = self.model.generate(
+            #             input_ids,
+            #             images=video_inputs,
+            #             modalities=["video"],
+            #             do_sample=False,
+            #             temperature=0.0,
+            #             max_new_tokens=512,
+            #         )
+
+            # result = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip()
+            # if answer not in result:
+            #     answer = "Caption: " + self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip() + "(trust the caption **only if** it **explicitly** mentions evidence that fully supports another answer. Otherwise trust VLM more. **Events that are not mentioned should not be considered as incorrect.**)\nVLM answer: " + answer
+            # # answer += ' (please judge according to **both** the answer above and the caption below. For the caption, only take **explicitly** mentioned things as evidence. **If something is not mentioned, you cannot directly judge it as wrong, as the caption may overlook details.**)\n' + self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip()
+            # print(answer)
+            # del input_ids, outputs, prompt
+            # torch.cuda.empty_cache()
+            # gc.collect()
+        answer += 'Note: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant.'
+        print(answer)
+        return [answer]
+
+    def predict_llava(self, video, questions, choices):
+        answers = ''
+        # Extract frames
+        frames, timestamps = video.extract_all_frames()
+        frames_np = np.stack([np.array(img) for img in frames])
+        for i in range(len(questions)):
+            if i > 0:
+                answers += '\n'
+            conversation = [
+                {"role": "user", "content": [
+                    {"type": "text", "text": questions[i] + f"\nChoices (choose one): {', '.join(choices)}" if i == 0 else questions[i]},
+                    {"type": "video"}
+                ]}
+            ]
+            prompt = self.processor.apply_chat_template(
+                conversation,
+                add_generation_prompt=True
+            )
+            inputs = self.processor(
+                text=prompt,
+                videos=frames_np,
+                padding=True,
+                return_tensors="pt"
+            ).to(self.device)
+
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=512,
+                    do_sample=False
+                )
+
+            # decode and return
+            answer = self.processor.decode(outputs[0], skip_special_tokens=True).strip()
+            del inputs, outputs, prompt
+            torch.cuda.empty_cache()
+            gc.collect()
+            answers += answer
+        return [answers]
+
+    def html(self, img, question, answers, output_var):
+        step = html_step_name(self.step_name)
+        img_str = html_embed_image(img)
+        ans_str = html_output(answers[0])
+        q_arg = html_arg_name('question')
+        v_arg = html_arg_name('video')
+        out = html_var_name(output_var)
+        return (
+            f"<div>"
+            f"{out}={step}({v_arg}={img_str}, {q_arg}='{question}')="
+            f"{ans_str}"
+            f"</div>"
+        )
+
+    def execute(self, prog_step, inspect=False):
+        video_var, question, output_var = self.parse(prog_step)
+        video = prog_step.state[video_var]
+
+        questions = question.split('|')
+
+        questions[0] = prog_step.state['QUESTION']
+
+        if 'TIME' in prog_step.state:
+            time_flag = prog_step.state['TIME']
+            
+            time_suffix = ''
+            if time_flag['begin'] is not None and '[' in time_flag['begin']:
+                time_suffix = 'at the beginning of the original video'
+            elif time_flag['middle'] is not None and '[' in time_flag['middle']:
+                time_suffix = 'at the middle of the original video'
+            elif time_flag['end'] is not None and '[' in time_flag['end']:
+                time_suffix = 'at the end of the original video'
+
+            for i in range(len(questions)):
+                if video_var + '_EVENT' in prog_step.state:
+                    if time_suffix == '':
+                        questions[i] = 'The video is clipped from the original video ' + prog_step.state[video_var + '_TIME'] + " " + prog_step.state[video_var + '_EVENT'].lower() + '\n' + questions[i]
+                    else:
+                        questions[i] = 'The video is clipped ' + time_suffix + ' ' + prog_step.state[video_var + '_TIME'] + " " + prog_step.state[video_var + '_EVENT'].lower() + '\n' + questions[i]
+                elif time_suffix != '':
+                    questions[i] = 'The video is clipped ' + time_suffix + '.\n' + questions[i]
+        answers = self.predict_qwen(video, questions, prog_step.state["CHOICES"])
+        prog_step.state[output_var] = answers
+
+        if inspect:
+            mid_t = video.get_video_length() / 2
+            frame = video.extract_frame(mid_t)
+            html_str = self.html(frame, question, answers, output_var)
+            return answers, html_str
+
+        return answers
+
+class VLMInterpreter:
+    step_name = 'VLM'
+
+    def __init__(
+        self,
         pretrained: str = "lmms-lab/LLaVA-Video-7B-Qwen2",
         model_name: str = "llava_qwen",
         max_frames: int = 64,
@@ -223,6 +587,7 @@ class VIDQAInterpreter:
         self.device = device if torch.cuda.is_available() else "cpu"
         self.max_frames = max_frames
         self.conv_template = conv_template
+        self._embedder = SentenceTransformer("hkunlp/instructor-xl")
 
         # load tokenizer, model, image_processor
         self.tokenizer, self.model, self.image_processor, _ = load_pretrained_model(
@@ -284,41 +649,21 @@ class VIDQAInterpreter:
 
         answer = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip()
 
-        prompt_text = DEFAULT_IMAGE_TOKEN + "\n" + time_instr + "\n" + question + f"\nPlease describe this video in detail."
+        max_emb = self._embedder.encode(answer, convert_to_tensor=True)
+        choice_embs = self._embedder.encode(choices, convert_to_tensor=True)
+        sims = util.cos_sim(max_emb, choice_embs)[0]
+        answer_index = int(sims.argmax())
+        
+        del input_ids, outputs, prompt
+        torch.cuda.empty_cache()
+        gc.collect()
+        
+        return answer_index
 
-        conv = copy.deepcopy(conv_templates[self.conv_template])
-        conv.append_message(conv.roles[0], prompt_text)
-        conv.append_message(conv.roles[1], None)
-        prompt = conv.get_prompt()
-
-        # tokenize with image token
-        input_ids = tokenizer_image_token(
-            prompt,
-            self.tokenizer,
-            IMAGE_TOKEN_INDEX,
-            return_tensors="pt"
-        ).unsqueeze(0).to(self.device)
-
-        # generate
-        with torch.no_grad():
-            outputs = self.model.generate(
-                input_ids,
-                images=video_inputs,
-                modalities=["video"],
-                do_sample=False,
-                temperature=0.0,
-                max_new_tokens=512,
-            )
-
-        answer = "Caption: " + self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip() + "(trust the caption **only if** it **explicitly** mentions evidence that fully supports another answer. **Events that are not mentioned should not be considered as incorrect.**)\nVLM answer: " + answer
-        # answer += ' (please judge according to **both** the answer above and the caption below. For the caption, only take **explicitly** mentioned things as evidence. **If something is not mentioned, you cannot directly judge it as wrong, as the caption may overlook details.**)\n' + self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0].strip()
-        print(answer)
-        return [answer]
-
-    def html(self, img, question, answers, output_var):
+    def html(self, img, question, answer, output_var):
         step = html_step_name(self.step_name)
         img_str = html_embed_image(img)
-        ans_str = html_output(answers[0])
+        ans_str = html_output(answer)
         q_arg = html_arg_name('question')
         v_arg = html_arg_name('video')
         out = html_var_name(output_var)
@@ -333,16 +678,18 @@ class VIDQAInterpreter:
         video_var, question, output_var = self.parse(prog_step)
         video = prog_step.state[video_var]
 
-        answers = self.predict(video, question, prog_step.state["CHOICES"])
-        prog_step.state[output_var] = answers
+        event_question = prog_step.state["QUESTION"]
+
+        answer = self.predict(video, event_question, prog_step.state["CHOICES"])
+        prog_step.state[output_var] = answer
 
         if inspect:
             mid_t = video.get_video_length() / 2
             frame = video.extract_frame(mid_t)
-            html_str = self.html(frame, question, answers, output_var)
-            return answers, html_str
+            html_str = self.html(frame, question, answer, output_var)
+            return answer, html_str
 
-        return answers
+        return answer
 
 class LocInterpreter():
     step_name = 'LOC'
@@ -585,7 +932,7 @@ class LocInterpreter():
 Output your thought process within the <think> </think> tags, including analysis with either specific timestamps (xx.xx) or time ranges (xx.xx to xx.xx) in <timestep> </timestep> tags.
 
 Then, provide the start and end times (in seconds, precise to two decimal places) in the format "start time to end time" within the <answer> </answer> tags. For example: "12.54 to 17.83"."""
-        video.save('tmp.mp4',fps=1)
+        video.save('tmp.mp4',fps=None)
         ans = self.inference('tmp.mp4', prompt, self.model, self.processor)
         rel_start, rel_end = self.parse_timestamp_output(ans)
         if rel_start is None:
@@ -605,6 +952,7 @@ Then, provide the start and end times (in seconds, precise to two decimal places
         video_var, question, output_var = self.parse(prog_step)
         video = prog_step.state[video_var]
         interval = self.predict(video, question)
+        prog_step.state[output_var + '_EVENT'] = question
         prog_step.state[output_var] = interval
         if inspect:
             return interval, f"Localized interval: {interval}s"
@@ -615,23 +963,38 @@ class CapInterpreter():
 
     def __init__(self):
         print(f'Registering {self.step_name} step')
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.device     = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-        self.processor = AutoProcessor.from_pretrained("microsoft/Florence-2-large", trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained("microsoft/Florence-2-large", torch_dtype=self.torch_dtype, trust_remote_code=True).to(self.device)
+        self.processor  = AutoProcessor.from_pretrained(
+            "microsoft/Florence-2-large",
+            trust_remote_code=True
+        )
+        self.model = AutoModelForCausalLM.from_pretrained(
+            "microsoft/Florence-2-large",
+            torch_dtype=self.torch_dtype,
+            trust_remote_code=True
+        ).to(self.device)
         self.model.eval()
 
-    def parse(self,prog_step):
-        parse_result = parse_step(prog_step.prog_str)
-        step_name = parse_result['step_name']
-        video_var = parse_result['args']['video']
-        output_var = parse_result['output_var']
-        assert(step_name==self.step_name)
-        return video_var,output_var
+    def parse(self, prog_step):
+        pr = parse_step(prog_step.prog_str)
+        assert pr['step_name'] == self.step_name
+        return pr['args']['video'], pr['output_var']
 
-    def predict(self,img):
-        prompt = "<MORE_DETAILED_CAPTION>"
-        inputs = self.processor(text=prompt, images=img, return_tensors="pt").to(self.device, self.torch_dtype)
+    def predict_batch(self, imgs: list[Image.Image]) -> list[str]:
+        # build a prompt for each image
+        prompts = ["<MORE_DETAILED_CAPTION>"] * len(imgs)
+
+        # one processor call for the entire batch
+        with gpu_lock:
+            inputs = self.processor(
+                text=prompts,
+                images=imgs,
+                return_tensors="pt",
+                padding=True
+            ).to(self.device, self.torch_dtype)
+
+        # single batched generate
         generated_ids = self.model.generate(
             input_ids=inputs["input_ids"],
             pixel_values=inputs["pixel_values"],
@@ -639,40 +1002,67 @@ class CapInterpreter():
             num_beams=3,
             do_sample=False
         )
-        generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
-        parsed_answer = self.processor.post_process_generation(generated_text, task="<MORE_DETAILED_CAPTION>", image_size=(img.width, img.height))
-        return parsed_answer['<MORE_DETAILED_CAPTION>']
 
-    def html(self,img,output,output_var):
+        # batch‐decode all sequences
+        texts = self.processor.batch_decode(
+            generated_ids, skip_special_tokens=True
+        )
+
+        del generated_ids, inputs, prompts
+        torch.cuda.empty_cache()
+        gc.collect()
+
+        # post‐process each caption
+        out = []
+        for txt, img in zip(texts, imgs):
+            parsed = self.processor.post_process_generation(
+                txt,
+                task="<MORE_DETAILED_CAPTION>",
+                image_size=(img.width, img.height)
+            )
+            out.append(parsed["<MORE_DETAILED_CAPTION>"])
+        return out
+
+    def html(self, img, output, output_var):
         step_name = html_step_name(self.step_name)
-        img_str = html_embed_image(img)
-        output = html_output(output)
-        output_var = html_var_name(output_var)
-        video_arg = html_arg_name('video')
-        return f"""<div>{output_var}={step_name}({video_arg}={img_str})={output}</div>"""
+        img_str   = html_embed_image(img)
+        out       = html_output(output)
+        var       = html_var_name(output_var)
+        arg       = html_arg_name('video')
+        return f"<div>{var}={step_name}({arg}={img_str})={out}</div>"
 
-    def execute(self,prog_step,inspect=False):
-        video_var,output_var = self.parse(prog_step)
+    def execute(self, prog_step, inspect=False):
+        video_var, output_var = self.parse(prog_step)
         video = prog_step.state[video_var]
-        dur = video.get_video_length()
+
+        # sample timestamps
+        dur   = video.get_video_length()
         times = np.linspace(0, dur, num=min(int(dur), 10), endpoint=False).tolist()
-        captions = []
-        for t in times:
-            caption = self.predict(video.extract_frame(t))
-            captions.append(caption)
+
+        # extract all frames at once
+        frames = [video.extract_frame(t) for t in times]
+
+        # batch‐predict
+        captions = self.predict_batch(frames)
+
+        # write back to state
         prog_step.state[output_var] = captions
-        img = video.extract_frame(dur / 2)
+
         if inspect:
-            html_str = self.html(img, captions, output_var)
+            # for html, just show the middle frame
+            mid_img  = video.extract_frame(dur / 2)
+            html_str = self.html(mid_img, captions, output_var)
             return captions, html_str
 
         return captions
+
         
 class SelectInterpreter():
     step_name = 'SELECT'
 
     def __init__(self):
         print(f'Registering {self.step_name} step')
+        self._embedder = SentenceTransformer("hkunlp/instructor-xl")
 
     def parse(self,prog_step):
         parse_result = parse_step(prog_step.prog_str)
@@ -697,10 +1087,10 @@ class SelectInterpreter():
         question,information_var,choices_var,output_var = self.parse(prog_step)
         information = prog_step.state[information_var]
         choices = prog_step.state[choices_var]
-        prompt = f"You are doing a video QA task.\nQuestion: {question}\nBased on the information on potential relative frames {information}, your task is to estimate the correctness of each choice in {choices}. Note that the answers may not be absolutely correct, so each choice has possibility, and it is possible that all choices have a low possibility. Your response must should be a json:\n{{\"reasoning\": \"<Your think step-by-step reasoning>\", \"possibility\": <A dict of estimated possibility distribution of each choice in format choice: possibility (0-100)>}}"
+        prompt = f"You are doing a video QA task.\nQuestion: {question}\nBased on the information on potential relative frames {information}, your task is to estimate the possibility of each choice in {choices} to be the correct answer. Note that the answers may not be absolutely correct and everything (like grammar) may be inaccurate, so each choice has possibility, and it is possible that all choices have a low possibility. Explicitly mentioned things weights more and implied things weights less. Your response must should be a json:\n{{\"reasoning\": \"<Your think step-by-step reasoning>\", \"possibility\": <A dict of estimated possibility distribution of each choice in format choice: possibility (0-100)>}}"
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4.1-mini",
                 messages=[
                     {"role": "user", "content": prompt}
                 ],
@@ -709,7 +1099,7 @@ class SelectInterpreter():
             )
         except:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4.1-mini",
                 messages=[
                     {"role": "user", "content": prompt}
                 ],
@@ -733,7 +1123,10 @@ class SelectInterpreter():
             answer_index = choices.index(max_choice)
         else:
             # Fallback if the exact text doesn't match
-            answer_index = -1
+            max_emb = self._embedder.encode(max_choice, convert_to_tensor=True)
+            choice_embs = self._embedder.encode(choices, convert_to_tensor=True)
+            sims = util.cos_sim(max_emb, choice_embs)[0]
+            answer_index = int(sims.argmax())
             print(f"Warning: Could not find '{max_choice}' in choices list.")
         print(json_answer['reasoning'])
 
@@ -777,6 +1170,8 @@ class ClipInterpreter():
             clipped_video = video.clip(frames[0], frames[-1])
         else:
             clipped_video = video
+        prog_step.state[output_var + '_EVENT'] = prog_step.state[frame_var + '_EVENT']
+        prog_step.state[output_var + '_TIME'] = 'when'
         prog_step.state[output_var] = clipped_video
         if inspect:
             img = video.extract_frame(video.get_video_length() // 2)
@@ -799,6 +1194,8 @@ class ClipBeforeInterpreter(ClipInterpreter):
             clipped_video = video
             
         prog_step.state[output_var] = clipped_video
+        prog_step.state[output_var + '_EVENT'] = prog_step.state[frame_var + '_EVENT']
+        prog_step.state[output_var + '_TIME'] = 'before'
         if inspect:
             img = video.extract_frame(video.get_video_length() // 2)
             out_img = clipped_video.extract_frame(clipped_video.get_video_length() // 2)
@@ -818,6 +1215,8 @@ class ClipAfterInterpreter(ClipInterpreter):
         else:
             clipped_video = video
         prog_step.state[output_var] = clipped_video
+        prog_step.state[output_var + '_EVENT'] = prog_step.state[frame_var + '_EVENT']
+        prog_step.state[output_var + '_TIME'] = 'after'
         if inspect:
             img = video.extract_frame(video.get_video_length() // 2)
             out_img = clipped_video.extract_frame(clipped_video.get_video_length() // 2)
@@ -854,10 +1253,18 @@ class ClipAroundInterpreter():
     def execute(self,prog_step,inspect=False):
         video_var,frame_no,output_var = self.parse(prog_step)
         video = prog_step.state[video_var]
+        if 'invalid=True' in prog_step.prog_str:
+            prog_step.state[output_var] = video
+            if inspect:
+                img = video.extract_frame(video.get_video_length() // 2)
+                out_img = video.extract_frame(video.get_video_length() // 2)
+                html_str = self.html(img, out_img, output_var, frame_no)
+                return video, html_str
+            return video
         if frame_no == -1:
             frame_no = video.get_video_length()
         assert frame_no >= 0 and frame_no <= video.get_video_length()
-        radius = max(video.get_video_length() / 10, 2)
+        radius = max(video.get_video_length() / 10, 4)
         start = max(0, frame_no - radius)
         end = min(video.get_video_length(), frame_no + radius)
         if start > frame_no - radius:
@@ -904,18 +1311,23 @@ class LengthInterpreter():
             return length, html_str
         return length
         
-def register_step_interpreters():
-    return dict(
-        VIDQA=VIDQAInterpreter(),
-        VQA=VQAInterpreter(),
-        EVAL=EvalInterpreter(),
-        RESULT=ResultInterpreter(),
-        LOC=LocInterpreter(),
-        SELECT=SelectInterpreter(),
-        CLIP=ClipInterpreter(),
-        CLIP_BEFORE=ClipBeforeInterpreter(),
-        CLIP_AFTER=ClipAfterInterpreter(),
-        CLIP_AROUND=ClipAroundInterpreter(),
-        LENGTH=LengthInterpreter(),
-        CAP = CapInterpreter()
-    )
+def register_step_interpreters(method = 'agent'):
+    if method == 'agent':
+        return dict(
+            VIDQA=VIDQAInterpreter(),
+            VQA=VQAInterpreter(),
+            EVAL=EvalInterpreter(),
+            RESULT=ResultInterpreter(),
+            LOC=LocInterpreter(),
+            SELECT=SelectInterpreter(),
+            CLIP=ClipInterpreter(),
+            CLIP_BEFORE=ClipBeforeInterpreter(),
+            CLIP_AFTER=ClipAfterInterpreter(),
+            CLIP_AROUND=ClipAroundInterpreter(),
+            LENGTH=LengthInterpreter(),
+            # VLM=VLMInterpreter(),
+            FLAG=FlagInterpreter(),
+            CAP = CapInterpreter()
+        )
+    else:
+        return dict(VLM = VLMInterpreter())

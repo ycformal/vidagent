@@ -57,13 +57,13 @@ def get_answer(file, method1, method2):
         else:
             correct2 = 0
     if correct1 == 0 and correct2 == 1:
-        print('fail', question, answer1)
+        print('fail', question)
     if correct1 == 1 and correct2 == 0:
         print('success', question)
 
 def main():
-    method1 = 'vidagent_gpt_vidqa_ssparser'
-    method2 = 'vidagent_gpt_vidqa_tvp_base'
+    method1 = 'vidagent_gpt_vidqa_ssparser_qwen_multi_question_16'
+    method2 = 'vlm_qwen_open_ended_16'
     results = os.listdir(f'results_{method1}')
     for result in results:
         get_answer(result, method1, method2)

@@ -1,0 +1,49 @@
+Question: How did the man in white guide the crane operator?
+
+Reference Answer: 3
+
+Video ID: 2757193865
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How did the man in white guide the crane operator?|What is the man in white doing?|What is the crane operator doing?|What is the man in white using to guide the crane operator?|What is the man in white's position in relation to the crane operator?|What actions does the man in white take to guide the crane operator?|Is the man in white giving verbal or nonverbal cues to the crane operator?|What is the purpose of the man in white's guidance?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How did the man in white guide the crane operator?|What is the man in white doing?|What is the crane operator doing?|What is the man in white using to guide the crane operator?|What is the man in white's position in relation to the crane operator?|What actions does the man in white take to guide the crane operator?|Is the man in white giving verbal or nonverbal cues to the crane operator?|What is the purpose of the man in white's guidance?")
+SELECTED=SELECT(question="How did the man in white guide the crane operator?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How did the man in white guide the crane operator?|What is the man in white doing?|What is the crane operator doing?|What is the man in white using to guide the crane operator?|What is the man in white's position in relation to the crane operator?|What actions does the man in white take to guide the crane operator?|Is the man in white giving verbal or nonverbal cues to the crane operator?|What is the purpose of the man in white's guidance?')=<b><span style='color: green;'>User: How did the man in white guide the crane operator?
+Assistant: The man in white guided the crane operator by pointing towards the truck.
+
+User: What is the man in white doing?
+Assistant: The man in white is walking past the crane.
+
+User: What is the crane operator doing?
+Assistant: The crane operator is actively engaged in lifting a white truck.
+
+User: What is the man in white using to guide the crane operator?
+Assistant: The man in white is using hand signals to guide the crane operator.
+
+User: What is the man in white's position in relation to the crane operator?
+Assistant: The man in white is standing near the crane, observing the operation.
+
+User: What actions does the man in white take to guide the crane operator?
+Assistant: The man in white gestures and points to guide the crane operator.
+
+User: Is the man in white giving verbal or nonverbal cues to the crane operator?
+Assistant: The man in white is giving nonverbal cues to the crane operator.
+
+User: What is the purpose of the man in white's guidance?
+Assistant: The man in white is providing guidance to the crane operator.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How did the man in white guide the crane operator?, <b><span style='color: darkorange;'>information</span></b>=["User: How did the man in white guide the crane operator?\nAssistant: The man in white guided the crane operator by pointing towards the truck.\n\nUser: What is the man in white doing?\nAssistant: The man in white is walking past the crane.\n\nUser: What is the crane operator doing?\nAssistant: The crane operator is actively engaged in lifting a white truck.\n\nUser: What is the man in white using to guide the crane operator?\nAssistant: The man in white is using hand signals to guide the crane operator.\n\nUser: What is the man in white's position in relation to the crane operator?\nAssistant: The man in white is standing near the crane, observing the operation.\n\nUser: What actions does the man in white take to guide the crane operator?\nAssistant: The man in white gestures and points to guide the crane operator.\n\nUser: Is the man in white giving verbal or nonverbal cues to the crane operator?\nAssistant: The man in white is giving nonverbal cues to the crane operator.\n\nUser: What is the purpose of the man in white's guidance?\nAssistant: The man in white is providing guidance to the crane operator.\n\n"], <b><span style='color: darkorange;'>choices</span></b>=['caress it', 'taps her', 'lean against railing', 'use hand gestures', 'wipe with tissue'])=<b><span style='color: green;'>3</span></b></div><hr>
+
+Answer: 3
+

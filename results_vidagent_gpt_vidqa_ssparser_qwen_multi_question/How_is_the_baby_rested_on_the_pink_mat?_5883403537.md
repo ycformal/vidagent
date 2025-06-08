@@ -1,0 +1,49 @@
+Question: How is the baby rested on the pink mat?
+
+Reference Answer: 4
+
+Video ID: 5883403537
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How is the baby positioned on the pink mat?|What is the baby doing on the pink mat?|What is the texture of the pink mat?|What is the size of the pink mat?|What is the color of the pink mat?|What is the material of the pink mat?|What is the shape of the pink mat?|What is the design of the pink mat?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How is the baby positioned on the pink mat?|What is the baby doing on the pink mat?|What is the texture of the pink mat?|What is the size of the pink mat?|What is the color of the pink mat?|What is the material of the pink mat?|What is the shape of the pink mat?|What is the design of the pink mat?")
+SELECTED=SELECT(question="How is the baby rested on the pink mat?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How is the baby positioned on the pink mat?|What is the baby doing on the pink mat?|What is the texture of the pink mat?|What is the size of the pink mat?|What is the color of the pink mat?|What is the material of the pink mat?|What is the shape of the pink mat?|What is the design of the pink mat?')=<b><span style='color: green;'>User: How is the baby rested on the pink mat?
+Assistant: The baby is lying on their side.
+
+User: What is the baby doing on the pink mat?
+Assistant: The baby is lying on the pink mat, moving its arms and legs slightly.
+
+User: What is the texture of the pink mat?
+Assistant: The pink mat has a textured surface.
+
+User: What is the size of the pink mat?
+Assistant: The pink mat is large, covering the entire visible area.
+
+User: What is the color of the pink mat?
+Assistant: The pink mat is light pink in color.
+
+User: What is the material of the pink mat?
+Assistant: The pink mat is made of a textured material.
+
+User: What is the shape of the pink mat?
+Assistant: The pink mat has a rectangular shape.
+
+User: What is the design of the pink mat?
+Assistant: The pink mat has a textured design.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How is the baby rested on the pink mat?, <b><span style='color: darkorange;'>information</span></b>=['User: How is the baby rested on the pink mat?\nAssistant: The baby is lying on their side.\n\nUser: What is the baby doing on the pink mat?\nAssistant: The baby is lying on the pink mat, moving its arms and legs slightly.\n\nUser: What is the texture of the pink mat?\nAssistant: The pink mat has a textured surface.\n\nUser: What is the size of the pink mat?\nAssistant: The pink mat is large, covering the entire visible area.\n\nUser: What is the color of the pink mat?\nAssistant: The pink mat is light pink in color.\n\nUser: What is the material of the pink mat?\nAssistant: The pink mat is made of a textured material.\n\nUser: What is the shape of the pink mat?\nAssistant: The pink mat has a rectangular shape.\n\nUser: What is the design of the pink mat?\nAssistant: The pink mat has a textured design.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['swipe off the person s hand', 'lying on her belly', 'sit up', 'wearing a cap', 'lying on her back'])=<b><span style='color: green;'>4</span></b></div><hr>
+
+Answer: 4
+

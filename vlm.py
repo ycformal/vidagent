@@ -54,20 +54,20 @@ else:
 
 prompter = partial(create_prompt,method='all')
 generator = ProgramGenerator(prompter=prompter, model_name_or_path=model)
-interpreter = ProgramInterpreter()
+interpreter = ProgramInterpreter(method = 'agent')
 import openai
 key = "tl.qspk.W5DyWbibnie1gou72KsNFzm2xtUltPk3bLuROweJsThTbc[IfLY:nogngujZVN{[ljus5rjxdLU4CmclGK{BHtxj`vvD6PLQiyZ1121yskCtUEk9bjQXX3.B1`25:4NQ[fuNnJGBdwMQHK[Tewgt:e4h.SNB"
 key = ''.join([chr(ord(k)-1) for k in key])
 openai.api_key=key
 
 dataset = pd.read_csv('dataset/NExTVideo/test.csv')
-folder_name = f'results_vlm'
+folder_name = f'results_vlm_qwen_open_ended_16'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
 for idx, row in tqdm(dataset.iterrows()):
-    if idx == 400:
-        break
+    if idx < 400:
+        continue
     # test my method
     question = row['question'].capitalize() + '?'
     print(question)
@@ -81,11 +81,12 @@ for idx, row in tqdm(dataset.iterrows()):
         f.write(f'Reference Answer: {answer}\n\n')
         f.write(f'Video ID: {row["video"]}\n\n')
     init_state = dict(
+        QUESTION=question,
         VIDEO=Video.read_file(f'dataset/NExTVideo/videos/{video_id}.mp4'),
         CHOICES=[row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]
     )
     choices = [row['a0'], row['a1'], row['a2'], row['a3'], row['a4']]
-    result, _, _ = interpreter.execute(f'ANSWERS0=VIDQA(video=VIDEO,question="{question}")\nANSWER0=SELECT(question="{question}",information=ANSWERS0,choices=CHOICES)\nFINAL_RESULT=RESULT(var=ANSWER0)'.replace("'", " "),init_state,inspect=True)
+    result, _ = interpreter.execute(f'ANSWERS0=VIDQA(video=VIDEO,question="{question}")\nSELECTED=SELECT(question="{question}",information=ANSWERS0,choices=CHOICES)'.replace("'", " "),init_state)
     print(result)
     with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','a') as f:
         f.write(f'Answer: {result}\n\n')

@@ -1,0 +1,49 @@
+Question: How was the white ingredient being added to the pot?
+
+Reference Answer: 4
+
+Video ID: 4651795201
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How was the white ingredient being added to the pot?|What is the person doing with the white ingredient?|What is the person's technique for adding the white ingredient?|What is the consistency of the white ingredient?|What is the color of the white ingredient?|What is the texture of the white ingredient?|What is the amount of the white ingredient being added?|What is the tool or utensil being used to add the white ingredient?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How was the white ingredient being added to the pot?|What is the person doing with the white ingredient?|What is the person's technique for adding the white ingredient?|What is the consistency of the white ingredient?|What is the color of the white ingredient?|What is the texture of the white ingredient?|What is the amount of the white ingredient being added?|What is the tool or utensil being used to add the white ingredient?")
+SELECTED=SELECT(question="How was the white ingredient being added to the pot?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAA4AGQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDHs7I3NjDBNO7qFXcQQu70yR2q0uni1u0+w243sCZMctIPTcfeuU0LxAJHeMhUjLExKBjbkk7fp6V051h7dVm3qhjPDMOPTHvWkqKb5rExqSS5bm3aXOoGykkgj8qZMDy/LB3L6Dng1t2lzcLcxLKqOD/yyVfnJ9c5wB/OuS0jVleeSO+0sm4cYl+zTFGI652HIB49R1rrdH8eeFNPCBrfUNPd8fNdWZYD6spP51xOhyyu2/0N/a3Vkkdemj2lzCrTwuq9Srr0+vOK87l0Ztd1aV40hs7KNthzEGJHI29PmY9euB0q74k+JsF9E1h4deWdt217xDsibsVGRlh7gY965l9e8VOsEC6nZ28UeWTyYN5H1LZzWU61GDtI0hGo4txRd1j4RWl7cLJpswso1TAQwklj6t82B+ArzvxD4OvNFvBZ30iqHG+OWLlWUcE84I9xXZTXXin7ZHPaeJJpJkP3WhUAHvkYwRWVrlp4l1e6W61RluTGmwCP93gdeAOP0pwxlGa7P+u4+TELd3Rk6Rp9jaanpl7dXsMsVmQfKKfM2Bx9ecGvUpby5udOgn+yKplRZFDbkJVhkYONpPtmvIZ7KYKvlRNnBAUjDE+2OG/D8q+grm4nsLNLG9kexiit4ltZcAxvhBkk9jnsa1UmldGNtbM8lXwlfWGp3V2l3HfeY+5iPkcE84IJx37GtDyrqOMpcRiPHbIJrrNWtDqGhx3RCmCdFdpUyGyDjJHGRkfka5OaO7tfkCvJH2JbeAP51ajJasv2ikZctsPMO1Mj1NFWhJMc5GDnp/8Arop86DU4sWwtPNtZkQTCbKsqnMikcEHpj265NP6ZRmZiDjEhJxWELu5ubtJp5HHP3j2Ht6CtRlkjnCEMX6ketdVKXPBQlujjSa1Oie+u5tAUxTO0hlMMjKcMiYG3J68nufTFVtL0I3ZM82GtejoGwZfr7Z6fnVDTxcyyXJgfEaRM8jDjHGAD+J6V3VglpbWSRRxoI06N1J9/YV5mPqyp+5DqehhIRk+aSuTWlrBZ26FolIRRwBu6dhUjogiS4RcI3QBx19xUqXtqHgeeNktd/wA5AwQPpVs3cRnmvtPtrcQqVEZUbGAz155J614stWerTaWrV/yHvo11pNjFeTW8iRXABDA5wMcbvTPaoQzEeZ5iso6jHSpI9evplS3d5GhDElGk+XB/hx6d/qapy2jvK0sKLG7HhUckCps+a3QpSi43a1/Aqanp0OrWskRiEbKciRsjHuK6TwT42ufPfRNd1OKQW8f7qa7IXzkzgBif4xkcnqPeqeoxWxtY47aNlm2jzJgcmTjv6c+lcdr9syXMMgdCXDoWwAT8h6/57Cu3CVZKXI3ozixVOE1zxVmj2DWtTR4BExj8p3A8wOGU47ZFcVrqQWyPLHFH57csLcnkey9M/rXnljLqLh45JHidE3RTw7UIbI4O0AMDnuCeK1Z7691FGe4vc2seTcTGTDDHQ5PWvaXqeS9GPXX4CoKwXBHqDmiuUbxNtciONXAOPMaM5f3NFc7jUT3/AAOlVKH8n4no8vhLRZU2vpMCD+9CWRh+Of5iuD8Q6U+i6g9mzb4WAkhmIwXQ+voRgjHtXtskCMhOMH2rltRttG1jWILG5skuZ0bymkyVKL1IBHfJruqpJXW5wUpNvU4W0xaeGZbiOJiJ7hIiCeoA/wDr10Vm8KWQTccgYGTzW5c+HtHjtr3S7eeSVbJ4rq4iLfNGp4PIHYfNXB6ZqN1feI7m3SyCxCVy3z5C5Pb1B6/yxXl4ulKqrx3R6eErQpSfOtGdjbogzGzqzA/NzyT71I84QiIjaG6ccelZrM0UyoBhsdGUgkevqaeIY/NEkkhJHOwnAFea4u2x2xnFt6nRWFnHPHJLIiKsSbmkzyB9PWsttRMUZxH8x5APUUtr4jitftCmF2BjKjbnjjk/SqEWowtCHcLt25LNxg9sk1jHm5nc6ORPW5Pda7bI4Vm6dwDzWBqeoxXV/BE4cqwYIqDLKMHc2CR06de59Ko6z4isIiRa4nm5yw+4Dj17/h+dYEGqSyTLcSqpmiBJmxgkH+HA7Yr0cNhZfHJWPNxFZfDE2dTvINN0hrqwWdpvM2sbkrgDjoq9Dz6moNF1BNbt5kvbeEnnlRjP4VR1K4M2izRuuCAGHPuKs/D62eW4nkAgkAIH2eXnzQQQwA+mOfcYr1IPQ4ZDZdAsvMPlOyL6ZorV1hYrXUXitNksQGdsoLPGf7hI6kfnRRzy7EWPT9T1cxYsrBle/k4HGRF/tH/CuBsdePhzVblHtvtUsUbulw52h5AM8j0zz70UVrU1lr0JpRSSZS8G+I59I8TjV7t/tENyzC8VuTKjdT9e4H4V3vjfwpNOujX2hwLcaTIREbq3YK4jZhsV89gcgMfocUUVz2V7mz7EPxGvrc/D2HTZLV11S0nVjII9mABglucqxBGV59Rkc14ymt6kkYEep3GR/C/zAfiaKK3o04SVmiW2tg/4STWwSi6pMobrtwM1nyXFxcSlZ55Jj1+diaKK1dGnB+7FIOeT3Zbjt3l2rHh8nAGf88Ut1Otoy20eJHVt0p7E+lFFc8neViloid9aimg8qW2O0jBCtkfrVnQvDr+I7kpp6vEIgN8rMVVM9vc+woopPRNoTZ1CeA/s4aMapyCd2I2PPfvRRRXNKvJPZFqGm5//2Q==">, <b><span style='color: darkorange;'>question</span></b>='How was the white ingredient being added to the pot?|What is the person doing with the white ingredient?|What is the person's technique for adding the white ingredient?|What is the consistency of the white ingredient?|What is the color of the white ingredient?|What is the texture of the white ingredient?|What is the amount of the white ingredient being added?|What is the tool or utensil being used to add the white ingredient?')=<b><span style='color: green;'>User: How was the white ingredient being added to the pot?
+Assistant: The white ingredient was being added to the pot by a person wearing gloves.
+
+User: What is the person doing with the white ingredient?
+Assistant: The person is adding the white ingredient to the pot.
+
+User: What is the person's technique for adding the white ingredient?
+Assistant: The person's technique for adding the white ingredient is to sprinkle it into the pot, causing a reaction in the soup.
+
+User: What is the consistency of the white ingredient?
+Assistant: The white ingredient has a creamy texture.
+
+User: What is the color of the white ingredient?
+Assistant: The white ingredient is possibly tofu or cheese.
+
+User: What is the texture of the white ingredient?
+Assistant: The white ingredient has a soft texture.
+
+User: What is the amount of the white ingredient being added?
+Assistant: The white ingredient is being added in a small amount.
+
+User: What is the tool or utensil being used to add the white ingredient?
+Assistant: The tool or utensil being used to add the white ingredient is not specified in the description.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How was the white ingredient being added to the pot?, <b><span style='color: darkorange;'>information</span></b>=["User: How was the white ingredient being added to the pot?\nAssistant: The white ingredient was being added to the pot by a person wearing gloves.\n\nUser: What is the person doing with the white ingredient?\nAssistant: The person is adding the white ingredient to the pot.\n\nUser: What is the person's technique for adding the white ingredient?\nAssistant: The person's technique for adding the white ingredient is to sprinkle it into the pot, causing a reaction in the soup.\n\nUser: What is the consistency of the white ingredient?\nAssistant: The white ingredient has a creamy texture.\n\nUser: What is the color of the white ingredient?\nAssistant: The white ingredient is possibly tofu or cheese.\n\nUser: What is the texture of the white ingredient?\nAssistant: The white ingredient has a soft texture.\n\nUser: What is the amount of the white ingredient being added?\nAssistant: The white ingredient is being added in a small amount.\n\nUser: What is the tool or utensil being used to add the white ingredient?\nAssistant: The tool or utensil being used to add the white ingredient is not specified in the description.\n\n"], <b><span style='color: darkorange;'>choices</span></b>=['with a spoon', 'in a bowl', 'grinded', 'pour', 'pull and tear'])=<b><span style='color: green;'>0</span></b></div><hr>
+
+Answer: 0
+

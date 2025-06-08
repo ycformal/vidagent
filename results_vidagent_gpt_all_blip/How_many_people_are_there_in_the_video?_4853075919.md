@@ -1,0 +1,31 @@
+Question: How many people are there in the video?
+
+Reference Answer: 1
+
+Video ID: 4853075919
+
+Original program:
+
+```
+ANSWERS0=VQA(video=VIDEO,question="How many people are there?")
+```
+
+Program:
+
+```
+ANSWERS0=VQA(video=VIDEO,question="How many people are there?")
+```
+
+Rationale common:
+
+
+
+Rationale VIDQA:
+
+<hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How many people are there?')=<b><span style='color: green;'>Caption: The video depicts a tender moment between an adult and a child in a cozy indoor setting. The child, dressed in a light-colored outfit with a bib, is seated on a white cushioned bench against a yellow wall. The adult, wearing a white shirt, is seen feeding the child with a spoon from a white bowl. The table in front of them has a blue and white checkered tablecloth, adding to the homely atmosphere. Throughout the video, the adult carefully brings the spoon to the child's mouth, ensuring the child eats comfortably. The child appears relaxed and content, occasionally looking away from the spoon. The scene remains consistent, emphasizing the nurturing interaction between the two individuals.(trust the caption **only if** it **explicitly** mentions evidence that fully supports another answer. **Events that are not mentioned should not be considered as incorrect.**)
+VLM answer: two.</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How many people are there in the video?, <b><span style='color: darkorange;'>information</span></b>=["Caption: The video depicts a tender moment between an adult and a child in a cozy indoor setting. The child, dressed in a light-colored outfit with a bib, is seated on a white cushioned bench against a yellow wall. The adult, wearing a white shirt, is seen feeding the child with a spoon from a white bowl. The table in front of them has a blue and white checkered tablecloth, adding to the homely atmosphere. Throughout the video, the adult carefully brings the spoon to the child's mouth, ensuring the child eats comfortably. The child appears relaxed and content, occasionally looking away from the spoon. The scene remains consistent, emphasizing the nurturing interaction between the two individuals.(trust the caption **only if** it **explicitly** mentions evidence that fully supports another answer. **Events that are not mentioned should not be considered as incorrect.**)\nVLM answer: two."], <b><span style='color: darkorange;'>choices</span></b>=['one', 'two', 'three', 'four', 'five'])=<b><span style='color: green;'>1</span></b></div><hr>
+
+Prob_VIDQA: {'one': 5, 'two': 90, 'three': 3, 'four': 1, 'five': 1}
+
+Answer: 1
+

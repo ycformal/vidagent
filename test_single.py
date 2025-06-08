@@ -40,23 +40,22 @@ key = "tl.qspk.W5DyWbibnie1gou72KsNFzm2xtUltPk3bLuROweJsThTbc[IfLY:nogngujZVN{[l
 key = ''.join([chr(ord(k)-1) for k in key])
 openai.api_key=key
 
-prog = """FRAME0=LOC(video=VIDEO,event="The first man has stopped.")
-VIDEO1=CLIP_AFTER(video=VIDEO,frame=FRAME0)
-ANSWERS0=VIDQA(video=VIDEO1,question="What is the first man doing?")
-ANSWER0=SELECT(question="What does the first man do after stopping?",information=ANSWERS0,choices=CHOICES)
-FINAL_RESULT=RESULT(var=ANSWER0)"""
+prog = """FRAME0=LOC(video=VIDEO,event="Two men on the left are playing instruments.")
+VIDEO0=CLIP(video=VIDEO,frame=FRAME0)
+ANSWERS0=VLM(video=VIDEO0,question="How are the two men on the left playing their instruments?")"""
 # prog = """ANSWERS0=VIDQA(video=VIDEO,question="How did the lady position her legs as she was going down?")
 # ANSWER0=SELECT(question="How did the lady position her legs as she was going down?",information=ANSWERS0,choices=CHOICES)
 # FINAL_RESULT=RESULT(var=ANSWER0)"""
-question = "What does the first man do after stopping?"
+question = "How do the two men on the left play their instruments?"
 
 init_state = dict(
-    VIDEO=Video.read_file(f'dataset/NExTVideo/videos/2732002300.mp4'),
-    CHOICES=['move to the side', 'grab the back of his chair', 'swing the dog', 'wave', 'smoke']
+    VIDEO=Video.read_file(f'dataset/NExTVideo/videos/2906873825.mp4'),
+    CHOICES=['blow', 'tap feet', 'strum the string', 'press the keys', 'hit with sticks']
 )
 
-result, prog_state, html_str = interpreter.execute(prog,init_state,inspect=True)
+result, prog_state = interpreter.execute(prog,init_state)
 
+print(result)
 print(prog_state)
 
 for key, value in init_state.items():

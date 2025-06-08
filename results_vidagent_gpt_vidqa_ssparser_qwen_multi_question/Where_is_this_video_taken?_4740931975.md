@@ -1,0 +1,43 @@
+Question: Where is this video taken?
+
+Reference Answer: 0
+
+Video ID: 4740931975
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Where is this video taken?|What is the location of the video?|What is the setting of the video?|Where does the action in the video take place?|What is the background of the video?|What landmarks or objects can be seen in the video?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Where is this video taken?|What is the location of the video?|What is the setting of the video?|Where does the action in the video take place?|What is the background of the video?|What landmarks or objects can be seen in the video?")
+SELECTED=SELECT(question="Where is this video taken?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Where is this video taken?|What is the location of the video?|What is the setting of the video?|Where does the action in the video take place?|What is the background of the video?|What landmarks or objects can be seen in the video?')=<b><span style='color: green;'>User: Where is this video taken?
+Assistant: The video is taken by a riverbank with a bridge in the background.
+
+User: What is the location of the video?
+Assistant: The video is set by a serene river with a bridge in the background.
+
+User: What is the setting of the video?
+Assistant: The video is set by a serene river with a rocky shore, lush greenery, and a blue bridge in the background.
+
+User: Where does the action in the video take place?
+Assistant: The action takes place on a rocky riverbank with a calm river, lush green vegetation, and a blue bridge in the background.
+
+User: What is the background of the video?
+Assistant: The background features a blue bridge spanning across the river, with lush green vegetation on the opposite bank.
+
+User: What landmarks or objects can be seen in the video?
+Assistant: The video features a blue bridge in the background, a calm river, and a grassy area with trees.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Where is this video taken?, <b><span style='color: darkorange;'>information</span></b>=['User: Where is this video taken?\nAssistant: The video is taken by a riverbank with a bridge in the background.\n\nUser: What is the location of the video?\nAssistant: The video is set by a serene river with a bridge in the background.\n\nUser: What is the setting of the video?\nAssistant: The video is set by a serene river with a rocky shore, lush greenery, and a blue bridge in the background.\n\nUser: Where does the action in the video take place?\nAssistant: The action takes place on a rocky riverbank with a calm river, lush green vegetation, and a blue bridge in the background.\n\nUser: What is the background of the video?\nAssistant: The background features a blue bridge spanning across the river, with lush green vegetation on the opposite bank.\n\nUser: What landmarks or objects can be seen in the video?\nAssistant: The video features a blue bridge in the background, a calm river, and a grassy area with trees.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['lake', 'along the streets', 'living room', 'roadside', 'on the plane'])=<b><span style='color: green;'>0</span></b></div><hr>
+
+Answer: 0
+

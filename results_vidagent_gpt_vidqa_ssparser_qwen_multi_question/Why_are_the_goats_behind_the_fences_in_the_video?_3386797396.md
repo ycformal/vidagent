@@ -1,0 +1,43 @@
+Question: Why are the goats behind the fences in the video?
+
+Reference Answer: 4
+
+Video ID: 3386797396
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Why are the goats behind the fences?|What is the purpose of the fences?|What is the behavior of the goats behind the fences?|How do the goats interact with the fences?|What is the environment surrounding the goats and fences?|Are there any other animals or people near the goats and fences?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Why are the goats behind the fences?|What is the purpose of the fences?|What is the behavior of the goats behind the fences?|How do the goats interact with the fences?|What is the environment surrounding the goats and fences?|Are there any other animals or people near the goats and fences?")
+SELECTED=SELECT(question="Why are the goats behind the fences in the video?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Why are the goats behind the fences?|What is the purpose of the fences?|What is the behavior of the goats behind the fences?|How do the goats interact with the fences?|What is the environment surrounding the goats and fences?|Are there any other animals or people near the goats and fences?')=<b><span style='color: green;'>User: Why are the goats behind the fences in the video?
+Assistant: The goats are behind the fences to keep them contained in a specific area, likely for safety and management purposes.
+
+User: What is the purpose of the fences?
+Assistant: The fences are used to contain the goats within a designated area.
+
+User: What is the behavior of the goats behind the fences?
+Assistant: The goats behind the fences are standing and appear to be observing the interaction.
+
+User: How do the goats interact with the fences?
+Assistant: The goats lean over the fences, showing curiosity and engagement with the child.
+
+User: What is the environment surrounding the goats and fences?
+Assistant: The environment includes a red barn and a dirt ground, suggesting a farm or petting zoo setting.
+
+User: Are there any other animals or people near the goats and fences?
+Assistant: Yes, there are other goats and a red barn-like structure in the background.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Why are the goats behind the fences in the video?, <b><span style='color: darkorange;'>information</span></b>=['User: Why are the goats behind the fences in the video?\nAssistant: The goats are behind the fences to keep them contained in a specific area, likely for safety and management purposes.\n\nUser: What is the purpose of the fences?\nAssistant: The fences are used to contain the goats within a designated area.\n\nUser: What is the behavior of the goats behind the fences?\nAssistant: The goats behind the fences are standing and appear to be observing the interaction.\n\nUser: How do the goats interact with the fences?\nAssistant: The goats lean over the fences, showing curiosity and engagement with the child.\n\nUser: What is the environment surrounding the goats and fences?\nAssistant: The environment includes a red barn and a dirt ground, suggesting a farm or petting zoo setting.\n\nUser: Are there any other animals or people near the goats and fences?\nAssistant: Yes, there are other goats and a red barn-like structure in the background.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['ready to be shaved', 'for food', 'for performance', 'measure weight', 'prevent them from escaping'])=<b><span style='color: green;'>4</span></b></div><hr>
+
+Answer: 4
+

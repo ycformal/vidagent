@@ -1,0 +1,49 @@
+Question: What is the girl doing in this video?
+
+Reference Answer: 0
+
+Video ID: 5647715900
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="What is the girl doing?|What is the girl's mood or attention?|What objects or people is the girl interacting with?|What is the girl's body position?|What is the girl's facial expression?|What is the girl's location in the video?|What actions is the girl taking?|What is the girl's role in the scene?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="What is the girl doing?|What is the girl's mood or attention?|What objects or people is the girl interacting with?|What is the girl's body position?|What is the girl's facial expression?|What is the girl's location in the video?|What actions is the girl taking?|What is the girl's role in the scene?")
+SELECTED=SELECT(question="What is the girl doing in this video?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='What is the girl doing?|What is the girl's mood or attention?|What objects or people is the girl interacting with?|What is the girl's body position?|What is the girl's facial expression?|What is the girl's location in the video?|What actions is the girl taking?|What is the girl's role in the scene?')=<b><span style='color: green;'>User: What is the girl doing in this video?
+Assistant: The girl is playing near the water's edge, interacting with a dog, and exploring the area.
+
+User: What is the girl's mood or attention?
+Assistant: The girl appears to be focused on the doll and the dog, showing curiosity and engagement with her surroundings.
+
+User: What objects or people is the girl interacting with?
+Assistant: The girl is interacting with a dog and a doll.
+
+User: What is the girl's body position?
+Assistant: The girl is standing on the grassy shore, facing the water.
+
+User: What is the girl's facial expression?
+Assistant: The girl's facial expression is one of curiosity and wonder.
+
+User: What is the girl's location in the video?
+Assistant: The girl is at the edge of a body of water, surrounded by green moss and grass.
+
+User: What actions is the girl taking?
+Assistant: The girl is walking along the shore, interacting with the dog, picking up a stick, and playing near the water.
+
+User: What is the girl's role in the scene?
+Assistant: The girl is exploring the area, interacting with the dog, and picking up a stick.
+
+Note: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant.</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=What is the girl doing in this video?, <b><span style='color: darkorange;'>information</span></b>=["User: What is the girl doing in this video?\nAssistant: The girl is playing near the water's edge, interacting with a dog, and exploring the area.\n\nUser: What is the girl's mood or attention?\nAssistant: The girl appears to be focused on the doll and the dog, showing curiosity and engagement with her surroundings.\n\nUser: What objects or people is the girl interacting with?\nAssistant: The girl is interacting with a dog and a doll.\n\nUser: What is the girl's body position?\nAssistant: The girl is standing on the grassy shore, facing the water.\n\nUser: What is the girl's facial expression?\nAssistant: The girl's facial expression is one of curiosity and wonder.\n\nUser: What is the girl's location in the video?\nAssistant: The girl is at the edge of a body of water, surrounded by green moss and grass.\n\nUser: What actions is the girl taking?\nAssistant: The girl is walking along the shore, interacting with the dog, picking up a stick, and playing near the water.\n\nUser: What is the girl's role in the scene?\nAssistant: The girl is exploring the area, interacting with the dog, and picking up a stick.\n\nNote: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant."], <b><span style='color: darkorange;'>choices</span></b>=['playing with dog', 'swimming', 'rolling on grass', 'sitting down', 'eating'])=<b><span style='color: green;'>0</span></b></div><hr>
+
+Answer: 0
+

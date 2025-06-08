@@ -1,0 +1,43 @@
+Question: Where is this happening?
+
+Reference Answer: 0
+
+Video ID: 6246539463
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Where is this happening?|What is the location of this event?|Where is the scene taking place?|What is the setting of this video?|What is the environment in the video?|What is the background of the video?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Where is this happening?|What is the location of this event?|Where is the scene taking place?|What is the setting of this video?|What is the environment in the video?|What is the background of the video?")
+SELECTED=SELECT(question="Where is this happening?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Where is this happening?|What is the location of this event?|Where is the scene taking place?|What is the setting of this video?|What is the environment in the video?|What is the background of the video?')=<b><span style='color: green;'>User: Where is this happening?
+Assistant: This is happening in a garden or backyard setting, as indicated by the lush green foliage surrounding the bird feeder.
+
+User: What is the location of this event?
+Assistant: The event is taking place in a garden or backyard, as suggested by the presence of dense green foliage and a bird feeder.
+
+User: Where is the scene taking place?
+Assistant: The scene is taking place in a garden or backyard, as indicated by the presence of green foliage and a bird feeder.
+
+User: What is the setting of this video?
+Assistant: The setting of the video is a lush, green environment with dense foliage and a bird feeder.
+
+User: What is the environment in the video?
+Assistant: The environment is a lush, green garden with dense foliage and sunlight filtering through the leaves.
+
+User: What is the background of the video?
+Assistant: The background of the video is a dense foliage of green leaves.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Where is this happening?, <b><span style='color: darkorange;'>information</span></b>=['User: Where is this happening?\nAssistant: This is happening in a garden or backyard setting, as indicated by the lush green foliage surrounding the bird feeder.\n\nUser: What is the location of this event?\nAssistant: The event is taking place in a garden or backyard, as suggested by the presence of dense green foliage and a bird feeder.\n\nUser: Where is the scene taking place?\nAssistant: The scene is taking place in a garden or backyard, as indicated by the presence of green foliage and a bird feeder.\n\nUser: What is the setting of this video?\nAssistant: The setting of the video is a lush, green environment with dense foliage and a bird feeder.\n\nUser: What is the environment in the video?\nAssistant: The environment is a lush, green garden with dense foliage and sunlight filtering through the leaves.\n\nUser: What is the background of the video?\nAssistant: The background of the video is a dense foliage of green leaves.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['bird feeder', 'wooded areas', 'play an', 'stage', 'footpath'])=<b><span style='color: green;'>0</span></b></div><hr>
+
+Answer: 0
+

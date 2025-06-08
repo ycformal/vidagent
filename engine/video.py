@@ -1,6 +1,7 @@
 import cv2
-from PIL import Image
 import math
+from moviepy import VideoFileClip
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 class Video:
     def __init__(self, file_path, clip_start=0.0, clip_end=None):
@@ -122,7 +123,7 @@ class Video:
             except:
                 pass
         return frames, times
-    def extract_all_frames(self):
+    def extract_all_frames(self, max_frame_num=16):
         """
         Uniformly sample frames across the clip. The total number of frames
         sampled is max(ceil(duration), min(total_frames_in_clip, 16)),
@@ -141,8 +142,8 @@ class Video:
 
         # compute how many to sample
         num_samples = max(
-            math.ceil(duration),
-            min(total_frames_in_clip, 16)
+            min(math.ceil(duration * 2), max_frame_num),
+            min(total_frames_in_clip, max_frame_num)
         )
 
         # if only one sample, just take t=0
@@ -158,7 +159,7 @@ class Video:
 
         # pick evenly‐spaced times between 0 and duration
         for i in range(num_samples):
-            t = (i / (num_samples - 1)) * duration
+            t = (i / (num_samples - 1)) * (duration - 1e-2)
             try:
                 img = self.extract_frame(t)
                 frames.append(img)
@@ -170,57 +171,188 @@ class Video:
 
     def save(self, file_path, fps: float = None):
         """
-        Saves the video clip (from self.clip_start to self.clip_end) to the specified file path,
-        at the given fps (frames per second). If fps is None, uses the original video's fps.
-        Playback speed remains the same; we simply sample at the new rate.
-
-        Args:
-            file_path (str): Where to write the clip.
-            fps (float, optional): Desired output frame rate. Defaults to original fps.
+        Saves the video clip (from self.clip_start to self.clip_end) to the specified file path.
+        If fps is None, uses a fast sequential copy at the original frame rate.
+        Otherwise falls back to your per-frame time-seek/resample logic.
         """
-        # 1) open source just to grab frame size
-        cap = cv2.VideoCapture(self.file_path)
-        if not cap.isOpened():
+        # 1) open source to grab properties
+        cap0 = cv2.VideoCapture(self.file_path)
+        if not cap0.isOpened():
             raise ValueError(f"Failed to open video file: {self.file_path}")
-        width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        cap.release()
+        orig_fps = cap0.get(cv2.CAP_PROP_FPS)
+        width   = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height  = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        cap0.release()
 
         # 2) decide output fps
-        fps_out = self.fps if fps is None else fps
+        use_orig = fps is None
+        fps_out  = orig_fps if use_orig else fps
         if fps_out <= 0:
             raise ValueError("fps must be > 0")
 
-        # 3) set up writer
+        # 3) prepare writer
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out    = cv2.VideoWriter(file_path, fourcc, fps_out, (width, height))
 
-        # 4) compute how many frames to emit
-        duration    = self.clip_end - self.clip_start
-        num_frames  = max(1, math.ceil(duration * fps_out))
+        # compute frame indices
+        start_frame = int(math.floor(self.clip_start * orig_fps))
+        end_frame   = int(math.ceil (self.clip_end   * orig_fps))
 
-        # 5) reopen cap for sampling
         cap = cv2.VideoCapture(self.file_path)
         if not cap.isOpened():
             raise ValueError(f"Failed to reopen video file: {self.file_path}")
 
-        for i in range(num_frames):
-            # time offset within clip
-            t_rel = i / fps_out
-            # clamp at end
-            if t_rel > duration:
-                t_rel = duration
+        if use_orig:
+            # ---- FAST PATH: sequential copy at original FPS ----
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+            for _ in range(end_frame - start_frame):
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                out.write(frame)
 
-            # seek and read
-            cap.set(cv2.CAP_PROP_POS_MSEC, (self.clip_start + t_rel) * 1000)
-            ret, frame = cap.read()
-            if not ret:
-                break
+        else:
+            # ---- FALLBACK: resample at new FPS via time-based seeks ----
+            duration   = self.clip_end - self.clip_start
+            num_frames = max(1, math.ceil(duration * fps_out))
+            for i in range(num_frames):
+                t_rel = (i / fps_out)
+                cap.set(cv2.CAP_PROP_POS_MSEC, (self.clip_start + t_rel) * 1000)
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                out.write(frame)
 
-            out.write(frame)
-
-        # 6) clean up
         cap.release()
         out.release()
+    def make_montage(self, frames, start_sec):
+        padding, border = 20, 5
+        extra_gap = padding * 3
+        bg = (255, 255, 255)
+
+        w, h = frames[0][1].size
+        n = len(frames)
+
+        # label area height and font
+        label_h = int(h * 0.2)
+        font_sz = max(32, int(label_h * 0.8))
+        font    = ImageFont.truetype("arial.ttf", font_sz)
+
+        total_w = padding + n*(w + 2*border) + (extra_gap if n>4 else 0) + padding
+        total_h = padding + h + 2*border + label_h + padding
+
+        canvas = Image.new("RGB", (total_w, total_h), bg)
+        draw   = ImageDraw.Draw(canvas)
+
+        x_off = padding
+        edges = []
+        for i, (t_rel, img) in enumerate(frames):
+            # white frame
+            frame_box = [x_off, padding, x_off + w + 2*border, padding + h + 2*border]
+            draw.rectangle(frame_box, fill=(255,255,255))
+            canvas.paste(img, (x_off+border, padding+border))
+
+            L = x_off + border
+            R = L + w
+            edges.append((L, R))
+
+            # timestamp label
+            actual = start_sec + t_rel
+            lbl    = f"{actual:.0f}s"
+            bb     = draw.textbbox((0,0), lbl, font=font)
+            tw, th = bb[2]-bb[0], bb[3]-bb[1]
+            lx = x_off + (w + 2*border - tw)//2
+            ly = padding + h + 2*border + (label_h - th)//2
+            draw.text((lx, ly), lbl, fill=(0,0,0), font=font)
+
+            x_off += w + 2*border
+            if i == 2 and n > 4:
+                x_off += extra_gap
+
+        # draw “…” in the big gap
+        if n > 4:
+            r3 = edges[2][1]
+            l4 = edges[3][0]
+            mid = (r3 + l4)//2
+            ell = "…"
+            ebb = draw.textbbox((0,0), ell, font=font)
+            tw_ell = ebb[2]-ebb[0]
+            xpos = mid - tw_ell//2
+            ypos = padding + border + (h//2) - (font_sz//2)
+            draw.text((xpos, ypos), ell, fill=(0,0,0), font=font)
+
+        return canvas
+
+    def add_filmframe(self, montage):
+        # ── tweak these ───────────────────────────────
+        hole_h     = 20    # height of each hole band
+        hole_w     = 8     # width of each black hole (thinner)
+        hole_gap   = 20    # gap between holes (wider white spacer)
+        line_thick = 4     # thickness of each solid line
+
+        line_col = (0, 0, 0)         # black for lines & holes
+        bg_color = (255, 255, 255)   # white background
+
+        mw, mh = montage.size
+        fw = mw
+        # total height = top line + top holes + mid line + image +
+        #                lower line + bottom holes + bottom line
+        fh = ( line_thick
+            + hole_h
+            + line_thick
+            + mh
+            + line_thick
+            + hole_h
+            + line_thick )
+
+        film = Image.new("RGB", (fw, fh), bg_color)
+        draw = ImageDraw.Draw(film)
+
+        y = 0
+        # 1) Top solid line
+        draw.rectangle([0, y, fw, y + line_thick], fill=line_col)
+
+        # 2) Top hole band
+        y += line_thick
+        count   = fw // (hole_w + hole_gap)
+        total_w = count * hole_w + (count - 1) * hole_gap
+        x0      = (fw - total_w) // 2
+        for i in range(count):
+            x = x0 + i * (hole_w + hole_gap)
+            draw.rectangle([x, y, x + hole_w, y + hole_h], fill=line_col)
+
+        # 3) Middle solid line
+        y += hole_h
+        draw.rectangle([0, y, fw, y + line_thick], fill=line_col)
+
+        # 4) Paste montage
+        y += line_thick
+        film.paste(montage, (0, y))
+
+        # 5) Lower solid line (below montage)
+        y += mh
+        draw.rectangle([0, y, fw, y + line_thick], fill=line_col)
+
+        # 6) Bottom hole band
+        y += line_thick
+        for i in range(count):
+            x = x0 + i * (hole_w + hole_gap)
+            draw.rectangle([x, y, x + hole_w, y + hole_h], fill=line_col)
+
+        # 7) Bottom solid line
+        y += hole_h
+        draw.rectangle([0, y, fw, y + line_thick], fill=line_col)
+
+        return film
+
+    def visualize(self):
+        clip   = VideoFileClip(self.file_path).subclipped(self.clip_start, self.clip_end)
+        ints = list(range(int(clip.duration) + 1))
+        times = ints if len(ints) <= 5 else ints[:3] + ints[-2:]
+        frames = [(t, Image.fromarray(clip.get_frame(t))) for t in times]
+
+        montage = self.make_montage(frames, self.clip_start)
+        film    = self.add_filmframe(montage)
+        return film
 
 

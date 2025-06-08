@@ -1,0 +1,43 @@
+Question: How many people are on stage?
+
+Reference Answer: 0
+
+Video ID: 5913320110
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How many people are on stage?|How many individuals are visible on stage?|What is the total number of people on stage?|Are there any people offstage?|What is the ratio of men to women on stage?|How many people are in the background of the stage?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How many people are on stage?|How many individuals are visible on stage?|What is the total number of people on stage?|Are there any people offstage?|What is the ratio of men to women on stage?|How many people are in the background of the stage?")
+SELECTED=SELECT(question="How many people are on stage?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How many people are on stage?|How many individuals are visible on stage?|What is the total number of people on stage?|Are there any people offstage?|What is the ratio of men to women on stage?|How many people are in the background of the stage?')=<b><span style='color: green;'>User: How many people are on stage?
+Assistant: There are two people on stage.
+
+User: How many individuals are visible on stage?
+Assistant: Two individuals are visible on stage.
+
+User: What is the total number of people on stage?
+Assistant: There are two people on stage.
+
+User: Are there any people offstage?
+Assistant: Yes, there is a person standing offstage to the left.
+
+User: What is the ratio of men to women on stage?
+Assistant: The ratio of men to women on stage is 1:1.
+
+User: How many people are in the background of the stage?
+Assistant: There is one person in the background of the stage.
+
+Note: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant.</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How many people are on stage?, <b><span style='color: darkorange;'>information</span></b>=['User: How many people are on stage?\nAssistant: There are two people on stage.\n\nUser: How many individuals are visible on stage?\nAssistant: Two individuals are visible on stage.\n\nUser: What is the total number of people on stage?\nAssistant: There are two people on stage.\n\nUser: Are there any people offstage?\nAssistant: Yes, there is a person standing offstage to the left.\n\nUser: What is the ratio of men to women on stage?\nAssistant: The ratio of men to women on stage is 1:1.\n\nUser: How many people are in the background of the stage?\nAssistant: There is one person in the background of the stage.\n\nNote: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant.'], <b><span style='color: darkorange;'>choices</span></b>=['two', 'five', 'four', 'one', 'six'])=<b><span style='color: green;'>0</span></b></div><hr>
+
+Answer: 0
+

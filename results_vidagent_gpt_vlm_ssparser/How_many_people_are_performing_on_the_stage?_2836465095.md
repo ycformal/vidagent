@@ -1,0 +1,23 @@
+Question: How many people are performing on the stage?
+
+Reference Answer: 2
+
+Video ID: 2836465095
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How many people are performing on the stage?")
+```
+Program:
+
+```
+ANSWERS0=VLM(video=VIDEO,question="How many people are performing on the stage?")
+```
+Rationale:
+
+<hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VLM</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCABLAGQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDSk1C0Y77y/uJ2HSKLgD8uKfb6vCjD7LpqLz9+VyAT9BWCGu5Pnh0pIYyODIxx+tMeVo2K3OpJGF6pAMn8O1AHWT6pdSJi41G3toiMFI0+b8OprOXUdPSbKRzXLZxukbav5ZrBWeBs/Z7G6nb+/I2B+WKs/wClmJZJDa2SAdCNxx9Ov8qAOri1W+EOY0tbaLqGdsn9f6Cs661KO4YLfapJKvUxwnH4Yrm5bm2EgDXVzeN6IoUfrnFTI9zLxa6SEBHDyuTn88CgDft9VhhJWwslWNerTuRz9M5qaTWriSMxvdLBH0Plx7fyJ5NcxPLLEVW4v4IwP4IFLNTI7iGQhYLK5uX/ALzvjP4CgDde/wBPRlJNzeMO7NhfwrQt9WuWjxaRW1uAOWcliB+JArml+3MMmC2sk5/1jcj8+ahkntcBZ7y5upB/BCmF/XmgDpLvVInyt5qskuf4LcED6dqba6hbINllZgMf4pJOf05rAiklk4tdK2gdZJpCxH8gKSTzoU/fXsMHPAjG4n64oA6v+3tQjwoktkAHCrFkY+tFcU13bljj7bN/tgqAaKALX/COavLh5Q0n1k2ij+wdQgBIisoz/tSjNdbNb2ituvNWd/RIztz/AFpEeyEuLa2Jk6B3Rm/UigDlm0rV5wFjZNvfy3zn9Kibw3qW7cYI8/3pJ+tds1pIwzLeJGB1+bOPw6VTaTSEkIlvHuG9M8Z+goA5hdK1VFIjazQj+64/kBTG0DWpj8xeQez7QK7eGCW6UPa2yonZivNQzxQIxW91XaB1SIj+dAHH/wBgahbD7lqhPd5QSfzqUaTrDqYl8kLj+B84rqYl09HH2K3MrH+PBY1Yktbk8POluPQ+n0oA4tvDepNjfCrHuZZeKcmj6nAw2fZE7YR+f0rppDpEDFbi/aaT+4jED8l/xqe2SG7XFjH5SDq20qT7ZNAHIP4d1iYYOXB5wJcD+VM/4Ry/hbJFpH6eZLn+ea7GeGO3JF1qIUD+FTk/TqaSF9NaTbao07njJy39KAOT/sjViAVltdvbDE/yFFdytlesMiAqOw20UAcdFqQi4t4AD6kDJ/E1L/ad4xO792MYznA/M81j5n2lpr5I17og5ppmtV4hQ3Df7RODQBpm7hbiV3mb0DHAqWPUph8tvAkaD+LYBWQkl1u4ENvGTx8ozTne2jDG4vJZm/upxQBqyajK5H2i9kK/3VY4A/Co1vYVf/RrbJ/vEZ/nWUbgMF+zW0akn70nJH51I4nIBkvUj4yVUAGgDZOqakse0TGGMnn5wpP4/wD1qrveW7N++lkuZB2DEj8TWWZrSM4G+6f1bIoE12/EaQW8Y7kDigDYGpSIuLW2VcD+Ef4U2TUJ3XdPc7c9QP8AAVk7oQu65v3kPZU6fn2oFwp5tbUE/wB+Xn/P4UAakd7An3Lfz2Pdhn/61W11G/RdySR2wPYNgj24rFXzyo86+SAY6IgqF5bEPgPLcMOpbvQBrvelzl9QYt3/AHjf0orIW6mbOy0gCg4GRz/OigLnm58Y6oRgiDH+4f8AGgeMdTUcJb57HYf8a6QaJpLZ22CdfcgfrR/YWlLljYw4+rH+tZzqqG5nQqKs7ROd/wCE01XstuPXEZ5/Wm/8JjqY/gt/++D/AI1szaboy4K2SZHqW/xqGLStOdvlswy+pz/jXRSpupDnR0SpNK5mf8JlqvbyAfaPH9aB4x1QHO2An1KH/GujTR9JVPmsITn0z/jSrpGksT/xLo/T+L/GsKk1Dc5qdVVJcqOa/wCEx1MHIW3H0Q/407/hNNWwB+446fu//r1vT6Hp8bf8eEajr8xPP61Ray0wuFWzjOD/AAgmtaEXWV4nU6LXUzD4v1Rv+eH/AH7/APr0f8JfqvrD/wB+66GLSNLdMGxi5PXkfzNSnRtITDGyhP8As/Mf61FR8m5yKtFz5Dmf+Ev1XOS0RPqU5o/4TDVcYzD/AN+hXRvpWjlSE01A3rluP1qjNpViGwLSIfU4/rTw/wC+funZ7GRlDxfrA6SR/wDfsUVrLp+lqoDW0JPqQ3+NFb+wkYNpOxgHxHqZHMy/9+xSf8JHqZ6zKR6bBWVRXM4xe6CEVD4dDRfXdQc584D/AHVAqMatfK24TYP+6P8ACqWaKtScVZMpyb3ZpjxBqa9Ln/xxf8KD4h1Q9bo/98L/AIVmUVLinuRGMYu8VY0TrupHrdH/AL5H+FR/2tfbsic5/wB0f4VSoqotwVo6GnNLuaK67qSdLn80U/0p48Q6oOl0R9EX/Csuik1fczUIp3S1NJtf1Nhzcn/vhf8ACojq16esw/75H+FUqKI+58Ohpzy7l4axfAYE3/jo/wAKKo0VXPLuRZH/2Q==">, <b><span style='color: darkorange;'>question</span></b>='How many people are performing on the stage?')=<b><span style='color: green;'>2</span></b></div><hr>
+
+Answer: 2
+

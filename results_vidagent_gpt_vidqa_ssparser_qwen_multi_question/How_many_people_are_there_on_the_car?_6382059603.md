@@ -1,0 +1,40 @@
+Question: How many people are there on the car?
+
+Reference Answer: 1
+
+Video ID: 6382059603
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How many people are on the car?|How many individuals are visible on the car?|What is the total number of people on the car?|Are there any people inside the car?|How many people are standing on the car?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How many people are on the car?|How many individuals are visible on the car?|What is the total number of people on the car?|Are there any people inside the car?|How many people are standing on the car?")
+SELECTED=SELECT(question="How many people are there on the car?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How many people are on the car?|How many individuals are visible on the car?|What is the total number of people on the car?|Are there any people inside the car?|How many people are standing on the car?')=<b><span style='color: green;'>User: How many people are there on the car?
+Assistant: There are three people on the car.
+
+User: How many individuals are visible on the car?
+Assistant: Three individuals are visible on the car.
+
+User: What is the total number of people on the car?
+Assistant: There are three people on the car.
+
+User: Are there any people inside the car?
+Assistant: Yes.
+
+User: How many people are standing on the car?
+Assistant: There are no people standing on the car.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How many people are there on the car?, <b><span style='color: darkorange;'>information</span></b>=['User: How many people are there on the car?\nAssistant: There are three people on the car.\n\nUser: How many individuals are visible on the car?\nAssistant: Three individuals are visible on the car.\n\nUser: What is the total number of people on the car?\nAssistant: There are three people on the car.\n\nUser: Are there any people inside the car?\nAssistant: Yes.\n\nUser: How many people are standing on the car?\nAssistant: There are no people standing on the car.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['five', 'three', 'two', 'one', 'four'])=<b><span style='color: green;'>1</span></b></div><hr>
+
+Answer: 1
+

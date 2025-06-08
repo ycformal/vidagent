@@ -1,0 +1,43 @@
+Question: Where is this happening?
+
+Reference Answer: 4
+
+Video ID: 10843059584
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Where is this happening?|What is the location of this event?|Where is the scene taking place?|What is the setting of this video?|What is the environment in the video?|What is the background of the video?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Where is this happening?|What is the location of this event?|Where is the scene taking place?|What is the setting of this video?|What is the environment in the video?|What is the background of the video?")
+SELECTED=SELECT(question="Where is this happening?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Where is this happening?|What is the location of this event?|Where is the scene taking place?|What is the setting of this video?|What is the environment in the video?|What is the background of the video?')=<b><span style='color: green;'>User: Where is this happening?
+Assistant: This is happening in a conference room.
+
+User: What is the location of this event?
+Assistant: The event is taking place in a room with wooden paneling and a ceiling with a grid pattern.
+
+User: Where is the scene taking place?
+Assistant: The scene is taking place in a conference room with wooden paneling and a ceiling with acoustic tiles.
+
+User: What is the setting of this video?
+Assistant: The video is set in a formal presentation or lecture setting, with a large screen displaying slides and a person standing on stage holding a microphone.
+
+User: What is the environment in the video?
+Assistant: The environment is a formal presentation setting with a large screen displaying slides and a wooden panel background.
+
+User: What is the background of the video?
+Assistant: The background of the video is a wooden panel wall with a ceiling that has a grid pattern.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Where is this happening?, <b><span style='color: darkorange;'>information</span></b>=['User: Where is this happening?\nAssistant: This is happening in a conference room.\n\nUser: What is the location of this event?\nAssistant: The event is taking place in a room with wooden paneling and a ceiling with a grid pattern.\n\nUser: Where is the scene taking place?\nAssistant: The scene is taking place in a conference room with wooden paneling and a ceiling with acoustic tiles.\n\nUser: What is the setting of this video?\nAssistant: The video is set in a formal presentation or lecture setting, with a large screen displaying slides and a person standing on stage holding a microphone.\n\nUser: What is the environment in the video?\nAssistant: The environment is a formal presentation setting with a large screen displaying slides and a wooden panel background.\n\nUser: What is the background of the video?\nAssistant: The background of the video is a wooden panel wall with a ceiling that has a grid pattern.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['in the day', 'house', 'hiking', 'living room', 'presentation hall'])=<b><span style='color: green;'>4</span></b></div><hr>
+
+Answer: 4
+

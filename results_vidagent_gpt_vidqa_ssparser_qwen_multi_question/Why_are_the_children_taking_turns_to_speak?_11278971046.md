@@ -1,0 +1,46 @@
+Question: Why are the children taking turns to speak?
+
+Reference Answer: 4
+
+Video ID: 11278971046
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Why are the children taking turns to speak?|What is the purpose of the children taking turns to speak?|What is the topic of discussion among the children?|How do the children decide who speaks next?|What is the body language of the children while taking turns to speak?|Do the children follow any rules while taking turns to speak?|What is the tone of the conversation among the children?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Why are the children taking turns to speak?|What is the purpose of the children taking turns to speak?|What is the topic of discussion among the children?|How do the children decide who speaks next?|What is the body language of the children while taking turns to speak?|Do the children follow any rules while taking turns to speak?|What is the tone of the conversation among the children?")
+SELECTED=SELECT(question="Why are the children taking turns to speak?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Why are the children taking turns to speak?|What is the purpose of the children taking turns to speak?|What is the topic of discussion among the children?|How do the children decide who speaks next?|What is the body language of the children while taking turns to speak?|Do the children follow any rules while taking turns to speak?|What is the tone of the conversation among the children?')=<b><span style='color: green;'>User: Why are the children taking turns to speak?
+Assistant: The children are taking turns to speak as part of a presentation or discussion, likely related to the flags they are holding.
+
+User: What is the purpose of the children taking turns to speak?
+Assistant: The purpose of the children taking turns to speak is likely to present information or discuss a topic related to the flags they are holding.
+
+User: What is the topic of discussion among the children?
+Assistant: The topic of discussion among the children is likely related to geography or cultural studies, as indicated by the maps and educational materials in the background.
+
+User: How do the children decide who speaks next?
+Assistant: The children decide who speaks next by using a small object, possibly a coin, to determine the order.
+
+User: What is the body language of the children while taking turns to speak?
+Assistant: The children are actively engaged in their presentation, using hand gestures to emphasize their points.
+
+User: Do the children follow any rules while taking turns to speak?
+Assistant: Yes, the children follow a rule of taking turns to speak while holding their cards.
+
+User: What is the tone of the conversation among the children?
+Assistant: The tone of the conversation among the children is serious and focused.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Why are the children taking turns to speak?, <b><span style='color: darkorange;'>information</span></b>=['User: Why are the children taking turns to speak?\nAssistant: The children are taking turns to speak as part of a presentation or discussion, likely related to the flags they are holding.\n\nUser: What is the purpose of the children taking turns to speak?\nAssistant: The purpose of the children taking turns to speak is likely to present information or discuss a topic related to the flags they are holding.\n\nUser: What is the topic of discussion among the children?\nAssistant: The topic of discussion among the children is likely related to geography or cultural studies, as indicated by the maps and educational materials in the background.\n\nUser: How do the children decide who speaks next?\nAssistant: The children decide who speaks next by using a small object, possibly a coin, to determine the order.\n\nUser: What is the body language of the children while taking turns to speak?\nAssistant: The children are actively engaged in their presentation, using hand gestures to emphasize their points.\n\nUser: Do the children follow any rules while taking turns to speak?\nAssistant: Yes, the children follow a rule of taking turns to speak while holding their cards.\n\nUser: What is the tone of the conversation among the children?\nAssistant: The tone of the conversation among the children is serious and focused.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['only one microphone', 'learning same dance', 'eye contact', 'to break lobster', 'sharing with each other'])=<b><span style='color: green;'>4</span></b></div><hr>
+
+Answer: 4
+

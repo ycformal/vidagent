@@ -1,0 +1,28 @@
+Question: How many people are involved in the video?
+
+Reference Answer: 3
+
+Video ID: 5864047618
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How many people are involved in the video?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How many people are involved in the video?")
+SELECTED=SELECT(question="How many people are involved in the video?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How many people are involved in the video?')=<b><span style='color: green;'>User: How many people are involved in the video?
+Assistant: two.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How many people are involved in the video?, <b><span style='color: darkorange;'>information</span></b>=['User: How many people are involved in the video?\nAssistant: two.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['four', 'six', 'five', 'two', 'one'])=<b><span style='color: green;'>3</span></b></div><hr>
+
+Answer: 3
+

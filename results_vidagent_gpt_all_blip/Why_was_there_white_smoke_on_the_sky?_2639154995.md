@@ -1,0 +1,37 @@
+Question: Why was there white smoke on the sky?
+
+Reference Answer: 0
+
+Video ID: 2639154995
+
+Original program:
+
+```
+ANSWERS0=VQA(video=VIDEO,question="Why is there white smoke on the sky?")
+```
+
+Program:
+
+```
+ANSWERS0=VQA(video=VIDEO,question="Why is there white smoke on the sky?")
+```
+
+Rationale common:
+
+
+
+Rationale VIDQA:
+
+<hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Why is there white smoke on the sky?')=<b><span style='color: green;'>Caption: The video captures a vibrant night scene where a group of people are gathered on a balcony or rooftop, overlooking a cityscape. The city is illuminated with various lights from buildings and streetlights, creating a lively backdrop. Fireworks are the focal point of the video, lighting up the sky in bursts of color and light. The fireworks display includes a variety of patterns and colors, such as bright white, red, and blue explosions that spread out in different shapes, including circular and star-like formations. 
+
+The people on the balcony appear to be enjoying the spectacle, standing close together and facing the fireworks. They are dressed casually, suggesting a relaxed and informal gathering. The balcony has a railing, and the city below is bustling with activity, as indicated by the movement of cars and the glow of streetlights.
+
+Throughout the video, the fireworks continue to explode in the sky, maintaining the dynamic and festive atmosphere. The sequence of fireworks is continuous, with each burst adding to the overall visual spectacle. The cityscape remains consistent, providing a steady background against which the fireworks stand out prominently.
+
+In summary, the video depicts a group of people on a balcony or rooftop, watching a spectacular fireworks display over a brightly lit cityscape at night. The fireworks are colorful and varied, creating a lively and celebratory mood throughout the video.(trust the caption **only if** it **explicitly** mentions evidence that fully supports another answer. **Events that are not mentioned should not be considered as incorrect.**)
+VLM answer: from the fireworks.</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Why was there white smoke on the sky?, <b><span style='color: darkorange;'>information</span></b>=['Caption: The video captures a vibrant night scene where a group of people are gathered on a balcony or rooftop, overlooking a cityscape. The city is illuminated with various lights from buildings and streetlights, creating a lively backdrop. Fireworks are the focal point of the video, lighting up the sky in bursts of color and light. The fireworks display includes a variety of patterns and colors, such as bright white, red, and blue explosions that spread out in different shapes, including circular and star-like formations. \n\nThe people on the balcony appear to be enjoying the spectacle, standing close together and facing the fireworks. They are dressed casually, suggesting a relaxed and informal gathering. The balcony has a railing, and the city below is bustling with activity, as indicated by the movement of cars and the glow of streetlights.\n\nThroughout the video, the fireworks continue to explode in the sky, maintaining the dynamic and festive atmosphere. The sequence of fireworks is continuous, with each burst adding to the overall visual spectacle. The cityscape remains consistent, providing a steady background against which the fireworks stand out prominently.\n\nIn summary, the video depicts a group of people on a balcony or rooftop, watching a spectacular fireworks display over a brightly lit cityscape at night. The fireworks are colorful and varied, creating a lively and celebratory mood throughout the video.(trust the caption **only if** it **explicitly** mentions evidence that fully supports another answer. **Events that are not mentioned should not be considered as incorrect.**)\nVLM answer: from the fireworks.'], <b><span style='color: darkorange;'>choices</span></b>=['from the fireworks', 'airline flew past', 'fire', 'camera tricks', 'chimney smoke'])=<b><span style='color: green;'>0</span></b></div><hr>
+
+Prob_VIDQA: {'from the fireworks': 95, 'airline flew past': 2, 'fire': 1, 'camera tricks': 1, 'chimney smoke': 1}
+
+Answer: 0
+

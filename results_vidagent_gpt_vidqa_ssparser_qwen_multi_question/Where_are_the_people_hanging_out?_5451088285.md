@@ -1,0 +1,43 @@
+Question: Where are the people hanging out?
+
+Reference Answer: 2
+
+Video ID: 5451088285
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Where are the people hanging out?|What is the location of the people?|What is the setting of the scene?|What is the environment like?|What objects or structures are present in the scene?|What is the mood or atmosphere of the location?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Where are the people hanging out?|What is the location of the people?|What is the setting of the scene?|What is the environment like?|What objects or structures are present in the scene?|What is the mood or atmosphere of the location?")
+SELECTED=SELECT(question="Where are the people hanging out?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Where are the people hanging out?|What is the location of the people?|What is the setting of the scene?|What is the environment like?|What objects or structures are present in the scene?|What is the mood or atmosphere of the location?')=<b><span style='color: green;'>User: Where are the people hanging out?
+Assistant: On a porch.
+
+User: What is the location of the people?
+Assistant: The people are on a porch with a wooden floor and white railings.
+
+User: What is the setting of the scene?
+Assistant: The scene is set on a porch with a wooden floor, a white railing, and a red wall.
+
+User: What is the environment like?
+Assistant: The environment is serene and intimate, with a white chair with a floral cushion in the foreground and a wooden railing in the background.
+
+User: What objects or structures are present in the scene?
+Assistant: The scene includes a white wicker chair with a floral cushion, a wooden railing, and a door leading into the house.
+
+User: What is the mood or atmosphere of the location?
+Assistant: The location has a warm and inviting atmosphere, enhanced by the natural light and the presence of a white wicker chair with a floral cushion.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Where are the people hanging out?, <b><span style='color: darkorange;'>information</span></b>=['User: Where are the people hanging out?\nAssistant: On a porch.\n\nUser: What is the location of the people?\nAssistant: The people are on a porch with a wooden floor and white railings.\n\nUser: What is the setting of the scene?\nAssistant: The scene is set on a porch with a wooden floor, a white railing, and a red wall.\n\nUser: What is the environment like?\nAssistant: The environment is serene and intimate, with a white chair with a floral cushion in the foreground and a wooden railing in the background.\n\nUser: What objects or structures are present in the scene?\nAssistant: The scene includes a white wicker chair with a floral cushion, a wooden railing, and a door leading into the house.\n\nUser: What is the mood or atmosphere of the location?\nAssistant: The location has a warm and inviting atmosphere, enhanced by the natural light and the presence of a white wicker chair with a floral cushion.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['kitchen', 'lawn', 'terrace', 'fountain', 'studio'])=<b><span style='color: green;'>2</span></b></div><hr>
+
+Answer: 2
+

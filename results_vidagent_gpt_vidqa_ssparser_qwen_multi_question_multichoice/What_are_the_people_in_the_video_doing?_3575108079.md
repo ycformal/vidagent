@@ -1,0 +1,37 @@
+Question: What are the people in the video doing?
+
+Reference Answer: 4
+
+Video ID: 3575108079
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="What are the people doing?|What is happening in the video?|What actions are being performed in the video?|What is the overall scene in the video?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="What are the people doing?|What is happening in the video?|What actions are being performed in the video?|What is the overall scene in the video?")
+SELECTED=SELECT(question="What are the people in the video doing?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='What are the people doing?|What is happening in the video?|What actions are being performed in the video?|What is the overall scene in the video?')=<b><span style='color: green;'>User: What are the people in the video doing?
+Assistant: talking.
+
+User: What is happening in the video?
+Assistant: The video shows a group of people sitting around a table in a restaurant, engaging in conversation and enjoying their drinks.
+
+User: What actions are being performed in the video?
+Assistant: The person in the black hoodie is seen resting their head on their hand, gesturing with their hands while talking, and leaning forward. The person in the white dress is seen holding a pink drink, drinking from it, and placing their arm around the person in the black hoodie.
+
+User: What is the overall scene in the video?
+Assistant: The video depicts a casual and relaxed social gathering in a restaurant or café setting, with individuals engaged in conversation and enjoying their time together.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=What are the people in the video doing?, <b><span style='color: darkorange;'>information</span></b>=['User: What are the people in the video doing?\nAssistant: talking.\n\nUser: What is happening in the video?\nAssistant: The video shows a group of people sitting around a table in a restaurant, engaging in conversation and enjoying their drinks.\n\nUser: What actions are being performed in the video?\nAssistant: The person in the black hoodie is seen resting their head on their hand, gesturing with their hands while talking, and leaning forward. The person in the white dress is seen holding a pink drink, drinking from it, and placing their arm around the person in the black hoodie.\n\nUser: What is the overall scene in the video?\nAssistant: The video depicts a casual and relaxed social gathering in a restaurant or café setting, with individuals engaged in conversation and enjoying their time together.\n\n'], <b><span style='color: darkorange;'>choices</span></b>=['working', 'walking', 'performing stunts', 'swimming', 'talking'])=<b><span style='color: green;'>4</span></b></div><hr>
+
+Answer: 4
+

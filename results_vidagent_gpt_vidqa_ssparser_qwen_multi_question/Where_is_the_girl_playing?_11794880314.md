@@ -1,0 +1,43 @@
+Question: Where is the girl playing?
+
+Reference Answer: 4
+
+Video ID: 11794880314
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Where is the girl playing?|What is the location of the girl?|What is the setting of the scene?|What objects or surroundings are near the girl?|What is the girl's environment?|What is the girl's position in relation to her surroundings?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Where is the girl playing?|What is the location of the girl?|What is the setting of the scene?|What objects or surroundings are near the girl?|What is the girl's environment?|What is the girl's position in relation to her surroundings?")
+SELECTED=SELECT(question="Where is the girl playing?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='Where is the girl playing?|What is the location of the girl?|What is the setting of the scene?|What objects or surroundings are near the girl?|What is the girl's environment?|What is the girl's position in relation to her surroundings?')=<b><span style='color: green;'>User: Where is the girl playing?
+Assistant: The girl is playing in a cozy living room.
+
+User: What is the location of the girl?
+Assistant: The girl is in a cozy living room.
+
+User: What is the setting of the scene?
+Assistant: The scene is set in a cozy living room with a couch, a lamp, and a bookshelf filled with books and decorative items.
+
+User: What objects or surroundings are near the girl?
+Assistant: The girl is near a black bookshelf filled with books and other items, a brown couch with patterned cushions, and a green sequined pillow.
+
+User: What is the girl's environment?
+Assistant: The girl is in a cozy living room with a couch, a lamp, and a bookshelf filled with books and decorative items.
+
+User: What is the girl's position in relation to her surroundings?
+Assistant: The girl is standing in the living room, surrounded by a couch with patterned cushions, a black entertainment unit with various items, and a lamp.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Where is the girl playing?, <b><span style='color: darkorange;'>information</span></b>=["User: Where is the girl playing?\nAssistant: The girl is playing in a cozy living room.\n\nUser: What is the location of the girl?\nAssistant: The girl is in a cozy living room.\n\nUser: What is the setting of the scene?\nAssistant: The scene is set in a cozy living room with a couch, a lamp, and a bookshelf filled with books and decorative items.\n\nUser: What objects or surroundings are near the girl?\nAssistant: The girl is near a black bookshelf filled with books and other items, a brown couch with patterned cushions, and a green sequined pillow.\n\nUser: What is the girl's environment?\nAssistant: The girl is in a cozy living room with a couch, a lamp, and a bookshelf filled with books and decorative items.\n\nUser: What is the girl's position in relation to her surroundings?\nAssistant: The girl is standing in the living room, surrounded by a couch with patterned cushions, a black entertainment unit with various items, and a lamp.\n\n"], <b><span style='color: darkorange;'>choices</span></b>=['inflatable pool', 'bedroom', 'in front of the television', 'at a carnival', 'living area'])=<b><span style='color: green;'>4</span></b></div><hr>
+
+Answer: 4
+

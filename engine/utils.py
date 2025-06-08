@@ -18,8 +18,8 @@ class Program:
 
 
 class ProgramInterpreter:
-    def __init__(self):
-        self.step_interpreters = register_step_interpreters()
+    def __init__(self, method = 'agent'):
+        self.step_interpreters = register_step_interpreters(method)
 
     def execute_step(self, prog_step, inspect):
         step_name = parse_step(prog_step.prog_str, partial=True)['step_name']
@@ -53,7 +53,7 @@ class ProgramInterpreter:
 
 class ProgramGenerator:
     def __init__(self, prompter, model_name_or_path="THUDM/glm-4-9b-hf",
-                 temperature=0.7, top_p=0.5, prob_agg='mean'):
+                 temperature=0, top_p=0.5, prob_agg='mean'):
         """
         Initialize the ProgramGenerator using Hugging Face Transformers to load
         the Meta-Llama-3.1-70B model with offloading to avoid GPU OOM issues.

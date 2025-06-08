@@ -9,12 +9,13 @@ from IPython.core.display import HTML
 from functools import partial
 
 from engine.utils import ProgramGenerator, ProgramInterpreter
-from prompts.task_repository import create_prompt
+from prompts.multichoice_tvp_multiple_questions import create_prompt
 from engine.video import Video
 import pandas as pd
 from tqdm import tqdm
 
 import argparse
+from ssparser import fix
 
 parser = argparse.ArgumentParser(description='Run the video agent experiment')
 parser.add_argument('--model', type=str, default='gpt', help='Model to generate the script')
@@ -41,13 +42,11 @@ key = ''.join([chr(ord(k)-1) for k in key])
 openai.api_key=key
 
 dataset = pd.read_csv('dataset/NExTVideo/test.csv')
-folder_name = f'results_vidagent_{args.model}_vidqa'
+folder_name = f'results_vidagent_{args.model}_qwen_multiple_questions'
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
 
 for idx, row in tqdm(dataset.iterrows()):
-    if idx < 317:
-        continue
     if idx == 400:
         break
     # test my method
@@ -66,6 +65,7 @@ for idx, row in tqdm(dataset.iterrows()):
         except Exception as e:
             prog,_ = generator.generate(dict(question=question))
     prog = prog.replace('VQA', 'VIDQA')
+    prog += f'\nSELECTED=SELECT(question="{question}",information=ANSWERS0,choices=CHOICES)'
     print(prog)
     with open(f'{folder_name}/{question.replace(" ","_")}_{video_id}.md','w') as f:
         f.write(f'Question: {question}\n\n')

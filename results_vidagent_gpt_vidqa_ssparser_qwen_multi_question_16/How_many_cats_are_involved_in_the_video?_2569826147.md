@@ -1,0 +1,40 @@
+Question: How many cats are involved in the video?
+
+Reference Answer: 4
+
+Video ID: 2569826147
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How many cats are involved in the video?|How many cats appear in the video?|What is the total number of cats in the video?|Are there multiple cats in the video?|Do any other animals appear in the video?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How many cats are involved in the video?|How many cats appear in the video?|What is the total number of cats in the video?|Are there multiple cats in the video?|Do any other animals appear in the video?")
+SELECTED=SELECT(question="How many cats are involved in the video?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How many cats are involved in the video?|How many cats appear in the video?|What is the total number of cats in the video?|Are there multiple cats in the video?|Do any other animals appear in the video?')=<b><span style='color: green;'>User: How many cats are involved in the video?
+Assistant: There are two cats involved in the video: a black and white cat and a small tabby kitten.
+
+User: How many cats appear in the video?
+Assistant: Two cats appear in the video.
+
+User: What is the total number of cats in the video?
+Assistant: There are two cats in the video.
+
+User: Are there multiple cats in the video?
+Assistant: Yes, there are two cats in the video.
+
+User: Do any other animals appear in the video?
+Assistant: No, no other animals appear in the video.
+
+Note: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant.</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How many cats are involved in the video?, <b><span style='color: darkorange;'>information</span></b>=['User: How many cats are involved in the video?\nAssistant: There are two cats involved in the video: a black and white cat and a small tabby kitten.\n\nUser: How many cats appear in the video?\nAssistant: Two cats appear in the video.\n\nUser: What is the total number of cats in the video?\nAssistant: There are two cats in the video.\n\nUser: Are there multiple cats in the video?\nAssistant: Yes, there are two cats in the video.\n\nUser: Do any other animals appear in the video?\nAssistant: No, no other animals appear in the video.\n\nNote: This is not a continuous conversation. Each question is independant. User questions may include wrong assumptions. First judge based on explicit things (with majority voting if contradictory) mentioned by assistant.'], <b><span style='color: darkorange;'>choices</span></b>=['five', 'three', 'four', 'one', 'two'])=<b><span style='color: green;'>4</span></b></div><hr>
+
+Answer: 4
+

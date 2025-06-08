@@ -1,0 +1,37 @@
+Question: Why did the man follow closely behind the baby when she moves from point to point?
+
+Reference Answer: 4
+
+Video ID: 7693297646
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="Why did the man follow closely behind the baby?|What is the man doing?|What surrounds the man?|How is the man feeling?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="Why did the man follow closely behind the baby?|What is the man doing?|What surrounds the man?|How is the man feeling?")
+SELECTED=SELECT(question="Why did the man follow closely behind the baby when she moves from point to point?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCABkADwDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDqbfxPfC1TzrW1mlAG92LR7uPXJGagn11Gtwn2PZtIDbZRkeo5FYkOm6jpkjWVxcRTPExRhsdjx0+bvU4F8JFMkSOhyrAKc/hkfrms74iOz/EIqi9LfgbllqtrDdPBJFOiyZO5owwbjOOD94cjjtjuKU3dlI0W6fYjszIZY2Hyk47ZwcAVzzz3E4l26fcg5JWSPkcdBz1p8uoGaVLuOGcI8CBYxH8oG0Zzg9c59KXta1rMtUqW6OtS9gfTp/Nubd3ZzGm2TPmccZ9CR3pbaEqpg2AFCrKyc52gZIx2rjI9Yt498MiSMcgsqrkkgdGXOeP8atG4tLn96WCq2SQGx+IGc+1P63UtqL6rTV7dTT8Ta4NFvNJjkjVY766EKSMTsRRg59yc8dqvLqkJLEXiRAn7omC+3SvCviH4he4nh0SDCW9sqvKMc+bjpk9AAeg7k5ri1gu7rMqxySZPLYzk/Wu2nWlJXl1OSWGitE9up9Z6rJF/aN0uyPmRuqc/WsRZrOS72KsZb7qDLDJH6DtS63qRbULphImRO4Hy5Od2Bx/+us+1vvImZHuEbGdzuNpwO6jt+VcqqdDp9n1LWo3C2cKBmjkVcDYpYEZ7jH+HFVjLC+meXYxyF2laDLPzkk8Z6gYPU+h9aW9vGlhjt1t1iwo4ZmBPHscnsaq6Xei4d7WUQoscm4ojZbcyYLMe+APwzipuaJaMsabYnyWuJoQrSSvGvlvkHB5H95uD7dxVfWdS0vSPD8sjsPOiUBVEJV3YdUGRgDAweansLq4/s+C5tLJjbiSR1vDKFjOGH3QMsehxkDOav6bp0utStdTStLYwO0qecmElfBxgZ+YDnLE4zjA604dkFRK12eZTeBLxvhlqWt3MSLfsy3jiTiTbu+YY6gAEHnrk+1cJp8M81tlfPwGwNg4/lX0jDd2+reFbqKzjLTxabje6EF1MZGRnqMqR+FeJWDxxQMpfHzEjNbc1tjCzd0z0u51CX+2dQmaRAYWkdQyjLNkhQOM9Tn8Kz7KYyT/6Q6D5cBo4wTyfXp/OuU07UdUvrmW4ttb8lSxADKu4nH908Vtm68QNHsbWYD0yfsUeeDnqBmsJKaekf6+46IpOO/5f5mjc6hJbX00ZSN8KM5yWYkAjJzzTdL1GGK8uLMqIriaNfKB3bJCN5Jb6AmseabUzulutSsyeN0htgp498iprDWYYbyL7Q0Vw/lSDbHAVaRANzc5OOF6jHGalKb3iaJJdUdnDMmoaLo8fljymjbz4lDDeNztwB/CMDn8PWoJtQWy04PdXMlnGwJ9umBx1wegribvx9rep3irZMlqgj8mKK1hydpJJHOT3/KrtholxYTrqHifXL/T1lhYrbqSZpo2OGCgdAcc5I471caevvGVSd1od38Lrue4FxpVyYZLZbYSRFNx8sEnMTN/CRnO09N3vXK/2Do+mXN3b3trvYXMojDnlY1cqoP8A3zn8a4rxH43e7t20rRLf+zNHXjykbMk2O8j9/oOPr1rsPh+tm3hSE6jZzTSeY5Rt4HyE5HX3JrtdOTd0reRzSqxbvI8wktbFfmTUP/HMn+dTQRz+SZo725SAfelYlVH0Gct+Fb934ba109rmC2fVJmXK3MIBtk+gHJI9Wx9KTT7bUtclSwj0uO6kOAQI2XH1IIFVKorXRnGGtmZ0kNukavb3XmzZG6W4zn3wMHFdJo3hLUNXDX8siWmnxAmS9uPlVQevJ65/WtpNK8P+E2V9VVNR1Nfu2FvJmOI/9NGOcfQZP0rI1zxDqGuyoLqQJBH/AKq1iG2KIew9fc5NZJSntsbOUYGqNc0vw9G1t4Ztg8/R9SuYwXP+4p+6Pc/kK4vxDqs0sTvcTSy3Vxw0kjZYjvyfyq08iQRtIzDaBuPPauQvbt7u4aV+/Qeg9K3p04xMZzciOCB729gtYvvzOEX8TXt0W2wgjtISVjiQIAPavNPh9YfbfEq3DDKWqFv+BHgf1r0aUhpWOe9dFON9TnqytoZOheCXsLddW13UG0myz8nluVlmx2AHJ/D8xU2p+M2MEljoMJ06yOVaXOZ5v95uwPoPxJrndT1O+1m8a7vrmSedhwznOB6AdAPpVThVGSeTXLGjreRo62lojg386l2lsn+EetRqvGVzn3pl5di3tXkz0XAHqe1bEKRla7e5YWqHgYL4/QVguakkdndnYkknJPrTYoWubmK3j+/K4RfxOKRqkep/DvTvsfhqa+YYe4YsP90cD/PvWqzEsa0I7ZNP0K2tYxhVQLj6D/8AVWYetddKOhwV5XZxCnvz7e1OXEjcntVcMW+XnFTIcfd+nArHlHzEy9gDjtXPaxeCeURIflTr9a1r26FraM4PzEYXnqa5Qk5rNnTSV9QJrpvh/pf9p+KInYZjtxvJ9zwP6n8K5ZjivX/hRpQt9Hmv5RgzHOT/AHeg/QMfxojvfsXUdo27nTau2NqAfdH8+awyOelX9SuA87E881nebXbSjaJ5taScjhV7/hUwJA47/wCFFFc5SMPWZGNyiZ+UKCB9ayTRRWTPQpfCiJzX0VpUSWXhK0jgXarfL+AUAUUUQ/yFW3XzMKclpWJ9aj2iiivRjseTLc//2Q==">, <b><span style='color: darkorange;'>question</span></b>='Why did the man follow closely behind the baby?|What is the man doing?|What surrounds the man?|How is the man feeling?')=<b><span style='color: green;'>User: Why did the man follow closely behind the baby when she moves from point to point?
+Assistant: ensure safety.
+
+User: What is the man doing?
+Assistant: The man is standing at the top of the slide, holding onto the railing and watching over the child.
+
+User: What surrounds the man?
+Assistant: The man is surrounded by trees and a building with large windows.
+
+User: How is the man feeling?
+Assistant: The man appears to be enjoying the moment, as indicated by his relaxed posture and the child's enjoyment.
+
+</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=Why did the man follow closely behind the baby when she moves from point to point?, <b><span style='color: darkorange;'>information</span></b>=["User: Why did the man follow closely behind the baby when she moves from point to point?\nAssistant: ensure safety.\n\nUser: What is the man doing?\nAssistant: The man is standing at the top of the slide, holding onto the railing and watching over the child.\n\nUser: What surrounds the man?\nAssistant: The man is surrounded by trees and a building with large windows.\n\nUser: How is the man feeling?\nAssistant: The man appears to be enjoying the moment, as indicated by his relaxed posture and the child's enjoyment.\n\n"], <b><span style='color: darkorange;'>choices</span></b>=['make baby in more comfortable postion', 'video the baby', 'encourage baby to swim', 'check for any reaction', 'ensure safety'])=<b><span style='color: green;'>4</span></b></div><hr>
+
+Answer: 4
+

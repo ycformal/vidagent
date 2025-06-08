@@ -1,0 +1,27 @@
+Question: How many adults are in the video?
+
+Reference Answer: 4
+
+Video ID: 10483027904
+
+Original program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VQA(video=VIDEO,question="How many adults are there?")
+```
+Program:
+
+```
+TIME=FLAG(begin=None,middle=None,end=None)
+ANSWERS0=VIDQA(video=VIDEO,question="How many adults are there?")
+SELECTED=SELECT(question="How many adults are in the video?",information=ANSWERS0,choices=CHOICES)
+```
+Rationale:
+
+<hr><div>FLAG is only for internal use.</div><hr><div><b><span style='color: blue;'>ANSWERS0</span></b>=<b><span style='color: red;'>VIDQA</span></b>(<b><span style='color: darkorange;'>video</span></b>=<img style="vertical-align:middle" src="data:image/jpeg;base64,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">, <b><span style='color: darkorange;'>question</span></b>='How many adults are there?')=<b><span style='color: green;'>USER: 
+How many adults are in the video?
+Choices (choose one): eleven, two, four, six, one ASSISTANT: There are two adults in the video.</span></b></div><hr><div><b><span style='color: blue;'>SELECTED</span></b>=<b><span style='color: red;'>SELECT</span></b>(<b><span style='color: darkorange;'>question</span></b>=How many adults are in the video?, <b><span style='color: darkorange;'>information</span></b>=['USER: \nHow many adults are in the video?\nChoices (choose one): eleven, two, four, six, one ASSISTANT: There are two adults in the video.'], <b><span style='color: darkorange;'>choices</span></b>=['eleven', 'two', 'four', 'six', 'one'])=<b><span style='color: green;'>1</span></b></div><hr>
+
+Answer: 1
+
